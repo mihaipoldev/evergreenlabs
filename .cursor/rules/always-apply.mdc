@@ -1,0 +1,7 @@
+---
+alwaysApply: true
+---
+- Components folder structure: ui are basic (shadcn) components and in other folders are bigger components that might use the basic components
+- We use Feature folder Structure so each feature/module will be found inside → `features/` folder
+- Bunny CDN → never `delete`, always `move to trash`  
+- ! ICONS: Use **Font Awesome React** icons only.  
