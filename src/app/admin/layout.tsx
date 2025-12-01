@@ -1,18 +1,27 @@
+"use client";
+
+import { ThemeProvider } from "next-themes";
+import { AdminHeader } from "@/components/admin/AdminHeader";
+import { AdminSidebar } from "@/components/admin/AdminSidebar";
+
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold text-card-foreground">
-            Admin Dashboard
-          </h1>
+    <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+      <div className="flex h-screen overflow-hidden bg-background">
+        <AdminSidebar />
+        <div className="flex flex-1 flex-col overflow-hidden md:pl-64">
+          <AdminHeader />
+          <main className="flex flex-1 flex-col min-h-0 overflow-y-auto">
+            <div className="flex flex-col py-6 pb-4 md:pb-8 px-4 md:px-10 lg:px-12 space-y-4 md:space-y-6">
+              {children}
+            </div>
+          </main>
         </div>
-      </header>
-      <main className="container mx-auto px-4 py-8">{children}</main>
-    </div>
+      </div>
+    </ThemeProvider>
   );
 }

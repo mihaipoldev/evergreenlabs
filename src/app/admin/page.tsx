@@ -1,12 +1,15 @@
-export default function AdminPage() {
+import { AdminPageTitle } from "@/components/admin/AdminPageTitle";
+
+export default function DashboardPage() {
   return (
-    <div className="rounded-lg border border-border bg-card p-8">
-      <h2 className="mb-4 text-3xl font-bold text-card-foreground">
-        Admin Dashboard
-      </h2>
+    <>
+      <AdminPageTitle
+        title="Dashboard"
+        description="Overview of your admin panel and site statistics."
+      />
       <p className="text-muted-foreground">
-        Admin section content will be added here.
+        Dashboard content will be added here.
       </p>
-    </div>
+    </>
   );
 }

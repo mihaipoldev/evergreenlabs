@@ -40,12 +40,14 @@ evergreenlabs/
    npm install
    ```
 
-2. Run the development server:
+2. Set up environment variables (see [Environment Variables](#environment-variables) below)
+
+3. Run the development server:
    ```bash
    npm run dev
    ```
 
-3. Open [http://localhost:3000](http://localhost:3000) in your browser.
+4. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## Available Scripts
 
@@ -73,6 +75,31 @@ import { Card } from "@/components/ui/card"
 - `@/*` - Points to `src/*`
 - `@/components/*` - Components directory
 - `@/lib/*` - Utility functions and helpers
+
+## Environment Variables
+
+Create a `.env.local` file in the root directory with the following variables:
+
+### Required
+
+- `NEXT_PUBLIC_SUPABASE_URL` - Your Supabase project URL
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Your Supabase anonymous key
+
+### Bunny CDN (Required for file uploads)
+
+- `BUNNY_STORAGE_ZONE` - Your Bunny CDN storage zone name
+- `BUNNY_STORAGE_PASSWORD` - Your Bunny CDN storage access key/password
+- `BUNNY_PULL_ZONE_URL` - Your Bunny CDN pull zone URL (e.g., `https://yourdomain.b-cdn.net` or `yourdomain.b-cdn.net`)
+- `BUNNY_STORAGE_HOSTNAME` (optional) - Bunny storage hostname, defaults to `storage.bunnycdn.com`
+
+Example `.env.local`:
+```env
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+BUNNY_STORAGE_ZONE=your-storage-zone
+BUNNY_STORAGE_PASSWORD=your-storage-password
+BUNNY_PULL_ZONE_URL=https://yourdomain.b-cdn.net
+```
 
 ## Next Steps
 
