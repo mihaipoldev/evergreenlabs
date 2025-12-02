@@ -3,16 +3,31 @@
  * Server-only module for interacting with Bunny CDN storage
  */
 
-const BUNNY_STORAGE_ZONE = process.env.BUNNY_STORAGE_ZONE;
-const BUNNY_STORAGE_PASSWORD = process.env.BUNNY_STORAGE_PASSWORD;
-const BUNNY_PULL_ZONE_URL = process.env.BUNNY_PULL_ZONE_URL;
-const BUNNY_STORAGE_HOSTNAME =
-  process.env.BUNNY_STORAGE_HOSTNAME || "storage.bunnycdn.com";
+/**
+ * Validates that all required Bunny CDN environment variables are set
+ * This is called lazily when functions are invoked, not at module load time
+ */
+function validateBunnyEnv() {
+  const BUNNY_STORAGE_ZONE = process.env.BUNNY_STORAGE_ZONE;
+  const BUNNY_STORAGE_PASSWORD = process.env.BUNNY_STORAGE_PASSWORD;
+  const BUNNY_PULL_ZONE_URL = process.env.BUNNY_PULL_ZONE_URL;
 
-if (!BUNNY_STORAGE_ZONE || !BUNNY_STORAGE_PASSWORD || !BUNNY_PULL_ZONE_URL) {
-  throw new Error(
-    "Missing required Bunny CDN environment variables. Please set BUNNY_STORAGE_ZONE, BUNNY_STORAGE_PASSWORD, and BUNNY_PULL_ZONE_URL."
-  );
+  if (!BUNNY_STORAGE_ZONE || !BUNNY_STORAGE_PASSWORD || !BUNNY_PULL_ZONE_URL) {
+    throw new Error(
+      "Missing required Bunny CDN environment variables. Please set BUNNY_STORAGE_ZONE, BUNNY_STORAGE_PASSWORD, and BUNNY_PULL_ZONE_URL."
+    );
+  }
+}
+
+function getBunnyConfig() {
+  validateBunnyEnv();
+  return {
+    BUNNY_STORAGE_ZONE: process.env.BUNNY_STORAGE_ZONE!,
+    BUNNY_STORAGE_PASSWORD: process.env.BUNNY_STORAGE_PASSWORD!,
+    BUNNY_PULL_ZONE_URL: process.env.BUNNY_PULL_ZONE_URL!,
+    BUNNY_STORAGE_HOSTNAME:
+      process.env.BUNNY_STORAGE_HOSTNAME || "storage.bunnycdn.com",
+  };
 }
 
 /**
@@ -25,12 +40,13 @@ export async function uploadToBunny(
   fileBuffer: Buffer,
   path: string
 ): Promise<string> {
-  const url = `https://${BUNNY_STORAGE_HOSTNAME}/${BUNNY_STORAGE_ZONE}/${path}`;
+  const config = getBunnyConfig();
+  const url = `https://${config.BUNNY_STORAGE_HOSTNAME}/${config.BUNNY_STORAGE_ZONE}/${path}`;
 
   const response = await fetch(url, {
     method: "PUT",
     headers: {
-      AccessKey: BUNNY_STORAGE_PASSWORD!,
+      AccessKey: config.BUNNY_STORAGE_PASSWORD,
       "Content-Type": "application/octet-stream",
     } as HeadersInit,
     body: fileBuffer as any,
@@ -44,7 +60,7 @@ export async function uploadToBunny(
   }
 
   // Construct and return the CDN URL
-  const pullZoneUrl = BUNNY_PULL_ZONE_URL!.replace(/\/$/, ""); // Remove trailing slash
+  const pullZoneUrl = config.BUNNY_PULL_ZONE_URL.replace(/\/$/, ""); // Remove trailing slash
   const cdnUrl = `${pullZoneUrl}/${path}`;
   return cdnUrl;
 }
@@ -54,12 +70,13 @@ export async function uploadToBunny(
  * @param path - The path of the file to delete (e.g., "artists/temp/image_123.jpg")
  */
 export async function deleteFromBunny(path: string): Promise<void> {
-  const url = `https://${BUNNY_STORAGE_HOSTNAME}/${BUNNY_STORAGE_ZONE}/${path}`;
+  const config = getBunnyConfig();
+  const url = `https://${config.BUNNY_STORAGE_HOSTNAME}/${config.BUNNY_STORAGE_ZONE}/${path}`;
 
   const response = await fetch(url, {
     method: "DELETE",
     headers: {
-      AccessKey: BUNNY_STORAGE_PASSWORD!,
+      AccessKey: config.BUNNY_STORAGE_PASSWORD,
     } as HeadersInit,
   });
 
@@ -91,8 +108,9 @@ export async function moveImageBetweenFolders(
   imageUrl: string,
   newFolderPath: string
 ): Promise<string> {
+  const config = getBunnyConfig();
   // Extract the file path from the CDN URL
-  const pullZoneUrl = BUNNY_PULL_ZONE_URL!.replace(/\/$/, ""); // Remove trailing slash
+  const pullZoneUrl = config.BUNNY_PULL_ZONE_URL.replace(/\/$/, ""); // Remove trailing slash
   const filePath = imageUrl.replace(pullZoneUrl + "/", "");
 
   // Download the file from the current location

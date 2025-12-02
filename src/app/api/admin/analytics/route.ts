@@ -69,11 +69,11 @@ export async function POST(request: Request) {
     }
 
     const insertData: AnalyticsEventInsert = {
-      event_name,
-      page: page || null,
-      section: section || null,
-      element: element || null,
-      metadata: metadata || null,
+        event_name,
+        page: page || null,
+        section: section || null,
+        element: element || null,
+        metadata: metadata || null,
     };
 
     const { data, error } = await (supabase
