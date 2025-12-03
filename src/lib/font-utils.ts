@@ -1,6 +1,6 @@
 import type { FontConfig } from "@/types/fonts";
 import { DEFAULT_FONT_CONFIG } from "@/types/fonts";
-import { getFontVariable } from "./fonts";
+import { getFontVariable as getFontVariableLightweight } from "./font-variables";
 
 /**
  * Parse font_family JSON string from database
@@ -48,8 +48,8 @@ export function getDefaultFontFamily(): FontConfig {
  * Generate complete CSS for admin fonts
  */
 export function generateFontCSS(fonts: FontConfig): string {
-  const headingVar = getFontVariable(fonts.admin.heading);
-  const bodyVar = getFontVariable(fonts.admin.body);
+  const headingVar = getFontVariableLightweight(fonts.admin.heading);
+  const bodyVar = getFontVariableLightweight(fonts.admin.body);
 
   return `:root{--font-family-admin-heading:var(${headingVar});--font-family-admin-body:var(${bodyVar});}html.preset-admin body,html.preset-admin body *,.preset-admin body,.preset-admin body *{font-family:var(${bodyVar}),system-ui,sans-serif!important;}html.preset-admin body h1,html.preset-admin body h2,html.preset-admin body h3,html.preset-admin body h4,html.preset-admin body h5,html.preset-admin body h6,.preset-admin h1,.preset-admin h2,.preset-admin h3,.preset-admin h4,.preset-admin h5,.preset-admin h6{font-family:var(${headingVar}),system-ui,sans-serif!important;}`;
 }

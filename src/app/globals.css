@@ -208,7 +208,13 @@
 
     /* --primary: 212 96% 51%; */
     /* --primary: 208 65% 50%; */
-    --primary: 208 65% 50%;
+
+    /* --primary: 182 64% 30%; */
+    /* --primary: 186 39% 49%; */
+    /* --primary: 170 60% 50%;  */
+    /* --primary: 160 90% 40%;  */
+    /* --primary: 202 90% 50%;   */
+    --primary: 193 57% 50%;  
 
     --primary-foreground: 0 0% 98%;
 

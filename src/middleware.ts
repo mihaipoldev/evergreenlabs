@@ -1,8 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import type { Database } from "@/lib/supabase/types";
-import { parseFontFamily, serializeFontFamily, generateFontCSS } from "@/lib/font-utils";
-import { getFontVariable } from "@/lib/fonts";
+import { parseFontFamily, serializeFontFamily } from "@/lib/font-utils";
+import { getFontVariable } from "@/lib/font-variables";
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
