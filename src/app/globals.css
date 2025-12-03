@@ -4,6 +4,11 @@
 
 @layer base {
   :root {
+    /* Brand color variables - base hue, saturation, lightness */
+    --brand-h: 212;
+    --brand-s: 96;
+    --brand-l: 51;
+
     --background: 0 0% 100%;
     --foreground: 0 0% 3.9%;
 
@@ -22,9 +27,9 @@
     --border: 0 0% 89.8%;
     --input: 0 0% 89.8%;
     --ring: 0 0% 3.9%;
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
-    --primary: 0 0% 9%;
+    --primary: var(--brand-h) var(--brand-s)% var(--brand-l)%;
     --primary-foreground: 0 0% 98%;
 
     --secondary: 0 0% 96.1%;
@@ -38,16 +43,25 @@
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
+
+    /* Font family variables - admin only */
+    --font-family-admin-heading: var(--font-geist-sans);
+    --font-family-admin-body: var(--font-geist-sans);
   }
 
   .dark {
-    --background: 0 0% 3.9%;
+    /* Brand color variables - base hue, saturation, lightness */
+    --brand-h: 212;
+    --brand-s: 96;
+    --brand-l: 51;
+
+    --background: 0 0% 7%;
     --foreground: 0 0% 98%;
 
     --card: 0 0% 3.9%;
     --card-foreground: 0 0% 98%;
 
-    --popover: 0 0% 3.9%;
+    --popover: 0 0% 7%;
     --popover-foreground: 0 0% 98%;
 
     --muted: 0 0% 14.9%;
@@ -60,8 +74,8 @@
     --input: 0 0% 14.9%;
     --ring: 0 0% 83.1%;
 
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
+    --primary: var(--brand-h) var(--brand-s)% var(--brand-l)%;
+    --primary-foreground: 0 0% 98%;
 
     --secondary: 0 0% 14.9%;
     --secondary-foreground: 0 0% 98%;
@@ -78,6 +92,100 @@
 
   /* Admin Preset - Professional, darker tones */
   .preset-admin {
+    /* Brand color variables - base hue, saturation, lightness */
+    --brand-h: 0;
+    --brand-s: 0;
+    --brand-l: 9;
+
+    --background: 0 0% 95%;
+    --foreground: 0 0% 3.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 3.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3.9%;
+
+    --muted: 0 0% 96.1%;
+    --muted-foreground: 0 0% 45.1%;
+
+    --accent: 0 0% 96.1%;
+    --accent-foreground: 0 0% 9%;
+
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
+    --ring: 0 0% 50%;
+    --radius: 1.1rem;
+
+    --primary: var(--brand-h) var(--brand-s) var(--brand-l);
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 0 0% 96.1%;
+    --secondary-foreground: 0 0% 9%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --sidebar-background: var(--brand-h) 1% 96%;
+    --sidebar-foreground: 0 0% 9%;
+    --sidebar-accent:  0 0% 100%;
+    --sidebar-accent-foreground: var(--primary);
+
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+  }
+
+  .preset-admin.dark {
+    /* Brand color variables - base hue, saturation, lightness */
+    --brand-h: 0;
+    --brand-s: 0;
+    --brand-l: 98;
+
+    --background: 0 0% 7%;
+    --foreground: 0 0% 96%;
+
+    --card: 0 0% 10%;
+    --card-foreground: 0 0% 96%;
+
+    --popover: 0 0% 7%;
+    --popover-foreground: 0 0% 96%;
+
+    --muted: 0 0% 18%;
+    --muted-foreground: 0 0% 63.9%;
+
+    --accent: 0 0% 14.9%;
+    --accent-foreground: 0 0% 96%;
+
+    --border: 0 0% 14.9%;
+    --input: 0 0% 14.9%;
+    --ring: 0 0% 60.1%;
+
+    --primary: var(--brand-h) var(--brand-s) var(--brand-l);
+    --primary-foreground: 0 0% 9%;
+
+    --secondary: 0 0% 14.9%;
+    --secondary-foreground: 0 0% 96%;
+
+    --destructive: 0 65.8% 50%;
+    --destructive-foreground: 0 0% 96%;
+
+    --sidebar-background: 0 0% 7%;
+    --sidebar-foreground: 0 0% 96%;
+    --sidebar-accent: 0 0% 11%;
+    --sidebar-accent-foreground: var(--primary);
+
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+
+  /* Landing Page Preset - Bright, vibrant, welcoming */
+  .preset-landing-page {
     --background: 0 0% 100%;
     --foreground: 0 0% 3.9%;
 
@@ -98,7 +206,10 @@
     --ring: 0 0% 3.9%;
     --radius: 0.75rem;
 
-    --primary: 0 0% 9%;
+    /* --primary: 212 96% 51%; */
+    /* --primary: 208 65% 50%; */
+    --primary: 208 65% 50%;
+
     --primary-foreground: 0 0% 98%;
 
     --secondary: 0 0% 96.1%;
@@ -114,7 +225,7 @@
     --chart-5: 27 87% 67%;
   }
 
-  .preset-admin.dark {
+  .preset-landing-page.dark {
     --background: 0 0% 3.9%;
     --foreground: 0 0% 98%;
 
@@ -133,9 +244,7 @@
     --border: 0 0% 14.9%;
     --input: 0 0% 14.9%;
     --ring: 0 0% 83.1%;
-
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
+    
 
     --secondary: 0 0% 14.9%;
     --secondary-foreground: 0 0% 98%;
@@ -149,80 +258,6 @@
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
   }
-
-  /* Landing Page Preset - Bright, vibrant, welcoming */
-  .preset-landing-page {
-    --background: 0 0% 100%;
-    --foreground: 142 76% 36%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 142 76% 36%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 142 76% 36%;
-
-    --muted: 142 20% 96%;
-    --muted-foreground: 142 10% 50%;
-
-    --accent: 142 20% 96%;
-    --accent-foreground: 142 76% 36%;
-
-    --border: 142 20% 90%;
-    --input: 142 20% 90%;
-    --ring: 142 76% 36%;
-    --radius: 0.75rem;
-
-    --primary: 142 76% 36%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 142 20% 96%;
-    --secondary-foreground: 142 76% 36%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-
-    --chart-1: 142 76% 36%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-  }
-
-  .preset-landing-page.dark {
-    --background: 142 76% 10%;
-    --foreground: 142 31% 91%;
-
-    --card: 142 76% 10%;
-    --card-foreground: 142 31% 91%;
-
-    --popover: 142 76% 10%;
-    --popover-foreground: 142 31% 91%;
-
-    --muted: 142 33% 17%;
-    --muted-foreground: 142 20% 65%;
-
-    --accent: 142 33% 17%;
-    --accent-foreground: 142 31% 91%;
-
-    --border: 142 33% 17%;
-    --input: 142 33% 17%;
-    --ring: 142 76% 36%;
-
-    --primary: 142 76% 36%;
-    --primary-foreground: 142 76% 10%;
-
-    --secondary: 142 33% 17%;
-    --secondary-foreground: 142 31% 91%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-
-    --chart-1: 142 76% 36%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-  }
 }
 
 @layer base {
@@ -231,6 +266,29 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  
+  /* Admin-specific font families */
+  html.preset-admin body,
+  html.preset-admin body *,
+  .preset-admin body,
+  .preset-admin body * {
+    font-family: var(--font-family-admin-body), system-ui, sans-serif !important;
+  }
+  
+  html.preset-admin body h1,
+  html.preset-admin body h2,
+  html.preset-admin body h3,
+  html.preset-admin body h4,
+  html.preset-admin body h5,
+  html.preset-admin body h6,
+  .preset-admin h1,
+  .preset-admin h2,
+  .preset-admin h3,
+  .preset-admin h4,
+  .preset-admin h5,
+  .preset-admin h6 {
+    font-family: var(--font-family-admin-heading), system-ui, sans-serif !important;
   }
 }
 
@@ -281,4 +339,306 @@
   .table-row-responsive {
     display: table-row;
   }
+}
+
+/* Landing page utilities */
+.bg-dot-pattern {
+  background-image: radial-gradient(circle, hsl(220 18% 20%) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.dark .bg-dot-pattern {
+  background-image: radial-gradient(circle, hsl(220 18% 30%) 1px, transparent 1px);
+}
+
+.bg-gradient-radial {
+  background: radial-gradient(ellipse at 50% 0%, hsl(var(--primary) / 0.08), transparent 60%);
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.8));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.bg-gradient-blue {
+  background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.8));
+}
+
+.border-glow {
+  border: 1px solid hsl(var(--border));
+  box-shadow: 0 0 20px hsl(var(--primary) / 0.1);
+}
+
+.glow-blue {
+  box-shadow: 0 0 60px hsl(var(--primary) / 0.3);
+}
+
+/* Glow animations using primary color */
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px hsl(var(--primary) / 0.5);
+  }
+}
+
+@keyframes glow-pulse-small {
+  0%, 100% {
+    box-shadow: 0 0 15px hsl(var(--primary) / 0.2);
+  }
+  50% {
+    box-shadow: 0 0 30px hsl(var(--primary) / 0.4);
+  }
+}
+
+.glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+.glow-pulse-small {
+  animation: glow-pulse-small 2s ease-in-out infinite;
+}
+
+/* Disable browser autofill styling */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px hsl(var(--background)) inset !important;
+  -webkit-text-fill-color: hsl(var(--foreground)) !important;
+  box-shadow: 0 0 0 30px hsl(var(--background)) inset !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+input[type="password"]:-webkit-autofill,
+input[type="password"]:-webkit-autofill:hover,
+input[type="password"]:-webkit-autofill:focus,
+input[type="password"]:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px hsl(var(--background)) inset !important;
+  -webkit-text-fill-color: hsl(var(--foreground)) !important;
+  box-shadow: 0 0 0 30px hsl(var(--background)) inset !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* 
+ * WISTIA PLAYER COLOR CUSTOMIZATION
+ * ==================================
+ * 
+ * The Wistia player color is set via JavaScript API in Hero.tsx using the Wistia Queue (_wq).
+ * The playerColor API affects BOTH the play button AND the progress bar.
+ * 
+ * TO CHANGE THE COLOR TO FOLLOW PRIMARY COLOR:
+ * ---------------------------------------------
+ * 1. Update your primary brand color in:
+ *    - Admin Settings: /admin/settings → Appearance → Primary Color (EASIEST - automatically updates)
+ *    - OR CSS: src/app/globals.css 
+ *      * Change --brand-h, --brand-s, --brand-l variables (lines 8-10 for light, 54-56 for dark)
+ *      * OR directly override --primary variable (line 32)
+ * 
+ * 2. The color is automatically read and applied to BOTH play button AND progress bar
+ * 
+ * TO USE A CUSTOM COLOR (different from primary):
+ * ------------------------------------------------
+ * 1. Open: src/components/landing/Hero.tsx
+ * 2. Find the script around line 276-277
+ * 3. Change: var useCustomColor = true;
+ * 4. Set: var customColor = 'yourhexcolor'; (without # symbol)
+ *    Example: var customColor = 'ff5733'; // Red
+ * 
+ * IMPORTANT: These CSS rules below are fallbacks but may not work due to iframe restrictions.
+ * The primary method is the JavaScript API which is set up in src/components/landing/Hero.tsx
+ * The API applies to BOTH play button AND progress bar automatically.
+ */
+
+/* Big Play Button Wrapper and Button */
+.wistia_embed .w-bpb-wrapper,
+.wistia_embed .w-big-play-button,
+.wistia_embed .w-big-play-button:hover,
+.wistia_embed .w-big-play-button:focus,
+.wistia_embed .w-big-play-button:active {
+  background-color: hsl(var(--primary) / 0.2) !important;
+  background: hsl(var(--primary) / 0.2) !important;
+}
+
+/* Target the second div with opacity: rgba(109, 237, 212, 0.7) */
+.wistia_embed .w-big-play-button > div[style*="rgba(109, 237, 212, 0.7)"],
+.wistia_embed .w-big-play-button > div[style*="rgba(109, 237, 212, 0.85)"] {
+  background-color: hsl(var(--primary) / 0.85) !important;
+  background: hsl(var(--primary) / 0.85) !important;
+}
+
+/* Big Play Button - Icon/foreground should always be white */
+.wistia_embed .w-big-play-button svg,
+.wistia_embed .w-big-play-button svg *,
+.wistia_embed .w-big-play-button svg path {
+  fill: #ffffff !important;
+  color: #ffffff !important;
+}
+
+/* Progress Bar - Background only (primary with transparency) */
+/* Target the progress bar inner element */
+.wistia_embed .w-progress-bar .w-progress-inner,
+.wistia_embed .w-controls .w-bar .w-progress-bar .w-progress-inner {
+  background-color: hsl(var(--primary) / 0.85) !important;
+  background: hsl(var(--primary) / 0.85) !important;
+}
+
+/* Target progress bar divs with inline styles - ONLY inside progress bar containers */
+/* This targets progress bar elements like: 
+   <div style="background: rgba(134, 228, 27, 0.85); border-radius: 4.5px;..."> */
+.wistia_embed [style*="rgba(109, 237, 212, 0.85)"],
+.wistia_embed [style*="background: rgba(109, 237, 212, 0.85)"],
+.wistia_embed div[style*="rgba(109, 237, 212, 0.85)"],
+.wistia_embed .w-progress-bar div[style*="rgba(109, 237, 212, 0.85)"],
+.wistia_embed .w-progress-inner div[style*="rgba(109, 237, 212, 0.85)"],
+.wistia_embed .w-progress-bar div[style*="rgba(134, 228, 27, 0.85)"],
+.wistia_embed .w-progress-inner div[style*="rgba(134, 228, 27, 0.85)"],
+/* Target ONLY the progress bar fill element - must have background rgba AND be inside progress bar */
+/* This targets: <div style="background: rgba(134, 228, 27, 0.85); border-radius: 4.5px; height: 100%;..."> */
+/* EXCLUDE: w-vulcan-v2 and w-vulcan--background elements (video container) */
+.wistia_embed .w-progress-bar div[style*="border-radius: 4.5px"][style*="background: rgba"],
+.wistia_embed .w-progress-bar div[style*="border-radius: 4.5px"][style*="background:rgb"],
+.wistia_embed .w-progress-inner div[style*="border-radius: 4.5px"][style*="background"],
+/* More specific: progress bar fill with rgba background */
+.wistia_embed .w-progress-bar > div[style*="rgba("][style*="border-radius: 4.5px"] {
+  background: hsl(var(--primary) / 0.85) !important;
+  background-color: hsl(var(--primary) / 0.85) !important;
+  border-radius: 0 !important;
+}
+
+/* Remove border-radius ONLY from progress bar fill elements */
+/* Target: progress bar fill element inside .w-progress-bar or .w-progress-inner */
+/* This element: <div style="background: rgba(...); border-radius: 4.5px; height: 100%; position: absolute;..."> */
+/* IMPORTANT: Only target divs inside progress bar containers, NOT play button or w-vulcan */
+.wistia_embed .w-progress-bar div[style*="border-radius: 4.5px"],
+.wistia_embed .w-progress-inner div[style*="border-radius: 4.5px"],
+.wistia_embed .w-progress-bar > div[style*="border-radius: 4.5px"] {
+  border-radius: 0 !important;
+}
+
+/* EXCLUDE w-vulcan elements from any primary color styling - CRITICAL */
+/* These are video container elements, they should NEVER get primary color background */
+.wistia_embed .w-vulcan-v2,
+.wistia_embed .w-vulcan--background,
+.wistia_embed [class*="w-vulcan"],
+.wistia_embed [id*="w-vulcan"] {
+  background: transparent !important;
+  background-color: transparent !important;
+  /* Reset any accidental primary color */
+  background-image: none !important;
+}
+
+/* EXCLUDE: play button - DO NOT change its border-radius */
+/* The play button is NOT inside .w-progress-bar, so it won't be affected by the rule above */
+/* But we explicitly exclude it to be safe */
+.wistia_embed .w-big-play-button,
+.wistia_embed .w-big-play-button *,
+.wistia_embed button[class*="w-big-play-button"],
+.wistia_embed button[class*="w-big-play-button"] * {
+  /* Keep original border-radius - do not override */
+  /* These elements are not inside .w-progress-bar so they won't be affected */
+}
+
+/* Ensure w-vulcan elements are not matched by any progress bar selectors */
+.wistia_embed .w-vulcan-v2[style*="border-radius: 4.5px"],
+.wistia_embed .w-vulcan--background[style*="border-radius: 4.5px"],
+.wistia_embed [class*="w-vulcan"][style*="border-radius: 4.5px"] {
+  background: transparent !important;
+  background-color: transparent !important;
+  /* Keep original border-radius - do not override */
+}
+
+/* Bottom Bar - Remove border radius */
+/* This targets: <div class="w-bottom-bar" style="...border-radius: 4.5px;..."> */
+.wistia_embed .w-bottom-bar,
+.wistia_embed [class*="w-bottom-bar"],
+.wistia_embed div.w-bottom-bar[style*="border-radius: 4.5px"],
+.wistia_embed div[style*="border-radius: 4.5px"][style*="bottom: 0px"] {
+  border-radius: 0 !important;
+}
+
+/* Progress Bar Track - Keep as is or make subtle */
+.wistia_embed .w-progress-bar,
+.wistia_embed .w-controls .w-bar .w-progress-bar {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Control Buttons - Icons should be foreground color */
+.wistia_embed .w-controls .w-play-button,
+.wistia_embed .w-controls .w-play-button:hover,
+.wistia_embed .w-controls .w-play-button:focus,
+.wistia_embed .w-controls .w-pause-button,
+.wistia_embed .w-controls .w-pause-button:hover,
+.wistia_embed .w-controls .w-pause-button:focus,
+.wistia_embed .w-controls .w-volume-button,
+.wistia_embed .w-controls .w-volume-button:hover,
+.wistia_embed .w-controls .w-volume-button:focus,
+.wistia_embed .w-controls .w-fullscreen-button,
+.wistia_embed .w-controls .w-fullscreen-button:hover,
+.wistia_embed .w-controls .w-fullscreen-button:focus {
+  color: hsl(var(--foreground)) !important;
+  fill: hsl(var(--foreground)) !important;
+  stroke: hsl(var(--foreground)) !important;
+}
+
+/* All SVG elements - Foreground color */
+.wistia_embed .w-controls svg,
+.wistia_embed .w-controls svg * {
+  fill: hsl(var(--foreground)) !important;
+  color: hsl(var(--foreground)) !important;
+  stroke: hsl(var(--foreground)) !important;
+}
+
+/* Time display and other text elements - Foreground color */
+.wistia_embed .w-current-time,
+.wistia_embed .w-duration,
+.wistia_embed .w-time-display {
+  color: hsl(var(--foreground)) !important;
+}
+
+/* Control bar background - Keep dark */
+.wistia_embed .w-controls,
+.wistia_embed .w-controls .w-bar {
+  background-color: rgba(0, 0, 0, 0.8) !important;
+}
+
+/* Masonry Grid */
+.masonry-grid {
+  display: flex;
+  margin-left: -2.5rem;
+  width: auto;
+}
+
+.masonry-grid_column {
+  padding-left: 2.5rem;
+  background-clip: padding-box;
+}
+
+.masonry-grid_column > div {
+  margin-bottom: 2.5rem;
+  position: relative;
+}
+
+/* Create overlapping rows with same-height items using transforms */
+.masonry-grid_column:nth-child(1) > div:nth-child(odd) {
+  transform: translateY(-2.5rem);
+  z-index: 1;
+}
+
+.masonry-grid_column:nth-child(1) > div:nth-child(even) {
+  transform: translateY(2.5rem);
+  z-index: 2;
+}
+
+.masonry-grid_column:nth-child(2) > div:nth-child(odd) {
+  transform: translateY(2.5rem);
+  z-index: 2;
+}
+
+.masonry-grid_column:nth-child(2) > div:nth-child(even) {
+  transform: translateY(-2.5rem);
+  z-index: 1;
 }

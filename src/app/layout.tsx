@@ -1,15 +1,14 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import { headers } from "next/headers";
 import "./globals.css";
-import { StylePresetProvider } from "@/components/StylePresetProvider";
+import { StylePresetProvider } from "@/providers/StylePresetProvider";
 import { AdminColorStyle } from "@/components/admin/AdminColorStyle";
 import { InstantColorApply } from "@/components/admin/InstantColorApply";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-sans",
-});
+import { AdminFontStyle } from "@/components/admin/AdminFontStyle";
+import { InstantFontApply } from "@/components/admin/InstantFontApply";
+import { getAllFontVariables } from "@/lib/fonts";
+import { Toaster } from "@/components/ui/toaster";
+import { ThemeProvider } from "next-themes";
 
 export const metadata: Metadata = {
   title: "Evergreen Labs",
@@ -26,15 +25,21 @@ export default async function RootLayout({
   const isAdminPage = pathname.includes("/admin") && !pathname.includes("/admin/login");
 
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} font-sans antialiased`}>
+    <html lang="en" suppressHydrationWarning className={getAllFontVariables()}>
+      <body className="font-sans antialiased">
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
         {/* CRITICAL: Server-side color injection - must be first in body */}
         {/* Next.js will move style tags to head automatically */}
         {isAdminPage && <AdminColorStyle />}
+        {/* CRITICAL: Server-side font injection */}
+          {isAdminPage && <AdminFontStyle />}
         {/* Client-side fallback from sessionStorage */}
-        <InstantColorApply />
+          {isAdminPage && <InstantColorApply />}
+          {isAdminPage && <InstantFontApply />}
         <StylePresetProvider />
+          <Toaster />
         {children}
+        </ThemeProvider>
       </body>
     </html>
   );

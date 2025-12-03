@@ -115,8 +115,8 @@ export function AdminSidebarMobile() {
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                   isActive
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                    : "text-sidebar-foreground hover:bg-accent hover:text-accent-foreground"
                 )}
               >
                 <FontAwesomeIcon icon={item.icon} className="h-4 w-4" />

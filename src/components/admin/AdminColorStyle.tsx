@@ -19,16 +19,21 @@ export async function AdminColorStyle() {
     if (isValidFormat) {
       // Use cookie value immediately - fastest option (no DB query!)
       const primaryValue = cookieColor.value;
-      // Return ONLY the style tag (no script needed, middleware handles persistence)
-      // This is the fastest path - style tag renders immediately
-      return (
-        <style
-          id="primary-color-inline-server"
-          dangerouslySetInnerHTML={{
-            __html: `:root,:root *,html,html *,body,body *,.preset-admin,.preset-admin *{--primary:${primaryValue}!important;}`,
-          }}
-        />
-      );
+      // Parse HSL values from cookie
+      const hslMatch = primaryValue.match(/(\d+)\s+(\d+)%\s+(\d+)%/);
+      if (hslMatch) {
+        const [, h, s, l] = hslMatch;
+        // Return ONLY the style tag (no script needed, middleware handles persistence)
+        // This is the fastest path - style tag renders immediately
+        return (
+          <style
+            id="primary-color-inline-server"
+            dangerouslySetInnerHTML={{
+              __html: `:root,:root *,html,html *,body,body *,.preset-admin,.preset-admin *,.preset-admin.dark,.preset-admin.dark *{--brand-h:${h}!important;--brand-s:${s}!important;--brand-l:${l}!important;--primary:${primaryValue}!important;}`,
+            }}
+          />
+        );
+      }
     }
     // Silently ignore invalid cookie format - fall back to database
   }
@@ -83,10 +88,10 @@ export async function AdminColorStyle() {
   const color = themeData.user_colors[0];
   const primaryValue = `${color.hsl_h} ${color.hsl_s}% ${color.hsl_l}%`;
 
-  return renderColorScript(primaryValue);
+  return renderColorScript(primaryValue, color.hsl_h, color.hsl_s, color.hsl_l);
 }
 
-function renderColorScript(primaryValue: string) {
+function renderColorScript(primaryValue: string, h: number, s: number, l: number) {
   // Return ONLY the style tag - Next.js will move it to head
   // The middleware handles persistence, and InstantColorApply handles client-side fallback
   // This is the cleanest approach - style tag applies immediately
@@ -95,7 +100,7 @@ function renderColorScript(primaryValue: string) {
     <style
       id="primary-color-inline-server"
       dangerouslySetInnerHTML={{
-        __html: `:root,:root *,html,html *,body,body *,.preset-admin,.preset-admin *{--primary:${primaryValue}!important;}`,
+        __html: `:root,:root *,html,html *,body,body *,.preset-admin,.preset-admin *,.preset-admin.dark,.preset-admin.dark *{--brand-h:${h}!important;--brand-s:${s}!important;--brand-l:${l}!important;--primary:${primaryValue}!important;}`,
       }}
     />
   );

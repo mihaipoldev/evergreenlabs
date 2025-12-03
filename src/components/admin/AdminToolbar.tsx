@@ -33,7 +33,7 @@ export function AdminToolbar({
             placeholder={searchPlaceholder}
             value={searchValue || ""}
             onChange={(e) => onSearchChange?.(e.target.value)}
-            className="pl-9 h-9 !border-0 focus-visible:!ring-0 focus-visible:!ring-offset-0 !shadow-none outline-none"
+            className="pl-9 h-10 rounded-sm !border-0 !shadow-none ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 outline-none"
           />
         </div>
       </div>

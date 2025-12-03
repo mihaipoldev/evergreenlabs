@@ -52,7 +52,7 @@ export interface Database {
           primary_color_id: string;
           secondary_color_id: string;
           accent_color_id: string;
-          font_family: string;
+          font_family: string; // JSON string: {"admin": {"heading": "font-id", "body": "font-id"}}
           created_at: string;
           updated_at: string;
         };
@@ -63,7 +63,7 @@ export interface Database {
           primary_color_id: string;
           secondary_color_id: string;
           accent_color_id: string;
-          font_family: string;
+          font_family: string; // JSON string: {"admin": {"heading": "font-id", "body": "font-id"}}
           created_at?: string;
           updated_at?: string;
         };
@@ -74,7 +74,7 @@ export interface Database {
           primary_color_id?: string;
           secondary_color_id?: string;
           accent_color_id?: string;
-          font_family?: string;
+          font_family?: string; // JSON string: {"landing": {"heading": "roboto", "body": "open-sans"}, "admin": {"heading": "montserrat", "body": "dm-sans"}}
           created_at?: string;
           updated_at?: string;
         };

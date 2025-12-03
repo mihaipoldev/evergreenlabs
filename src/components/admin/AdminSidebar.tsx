@@ -17,6 +17,7 @@ import {
   faSignOutAlt,
   faEllipsisVertical,
   faFile,
+  faHome,
 } from "@fortawesome/free-solid-svg-icons";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -31,6 +32,7 @@ import {
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
+import { CircleButton } from "@/components/admin/CircleButton";
 
 const navigationItems = [
   {
@@ -123,21 +125,22 @@ export function AdminSidebar() {
   };
 
   return (
-    <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 md:left-0 border-r border-border bg-card">
+    <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 md:left-0 border-r border-border bg-sidebar">
       <div className="flex flex-col h-full">
-        <div className="flex items-center gap-3 px-6 py-6">
-          <FontAwesomeIcon
-            icon={faLeaf}
-            className="h-6 w-6 text-primary"
-          />
-          <div className="flex flex-col">
-            <h2 className="text-base font-bold text-card-foreground leading-tight">
-              EVERGREEN LABS
+        <div className="flex items-center gap-3 px-6 py-4">
+          <div className="flex flex-col flex-1">
+            <h2 className="font-bold text-sidebar-foreground uppercase tracking-tight transition-colors group-hover:text-primary text-2xl">
+              EVERGREEN
             </h2>
-            <p className="text-xs text-muted-foreground leading-tight">
+            <p className="text-xs text-muted-foreground leading-tight -mt-0.5">
               Admin Panel
             </p>
           </div>
+          <Link href="/">
+            <CircleButton size="md" variant="ghost" className="shrink-0">
+              <FontAwesomeIcon icon={faHome} className="h-4 w-4" />
+            </CircleButton>
+          </Link>
         </div>
         <ScrollArea className="flex-1">
           <nav className="p-4 space-y-1">
@@ -148,10 +151,10 @@ export function AdminSidebar() {
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                    "flex items-center gap-3 rounded-sm px-3 py-2 text-sm font-medium transition-colors",
                     isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                      : "text-sidebar-foreground hover:text-sidebar-accent-foreground"
                   )}
                 >
                   <FontAwesomeIcon icon={item.icon} className="h-4 w-4" />

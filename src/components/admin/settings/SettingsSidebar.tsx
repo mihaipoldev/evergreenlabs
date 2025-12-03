@@ -1,7 +1,8 @@
 "use client";
 
+import { ChevronRight } from "lucide-react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUser, faPalette, faChevronRight } from "@fortawesome/free-solid-svg-icons";
+import { faUser, faPalette } from "@fortawesome/free-solid-svg-icons";
 import { cn } from "@/lib/utils";
 
 type Section = "account" | "appearance";
@@ -11,9 +12,24 @@ interface SettingsSidebarProps {
   onSectionChange: (section: Section) => void;
 }
 
-const sections: Array<{ id: Section; label: string; icon: any }> = [
-  { id: "account", label: "Account", icon: faUser },
-  { id: "appearance", label: "Appearance", icon: faPalette },
+const sections: Array<{
+  id: Section;
+  label: string;
+  icon: typeof faUser;
+  description: string;
+}> = [
+  {
+    id: "account",
+    label: "Account",
+    icon: faUser,
+    description: "Manage your profile and account",
+  },
+  {
+    id: "appearance",
+    label: "Appearance",
+    icon: faPalette,
+    description: "Theme & colors",
+  },
 ];
 
 export function SettingsSidebar({ activeSection, onSectionChange }: SettingsSidebarProps) {
@@ -22,23 +38,36 @@ export function SettingsSidebar({ activeSection, onSectionChange }: SettingsSide
       <nav className="space-y-1">
         {sections.map((section) => {
           const isActive = activeSection === section.id;
+
           return (
             <button
               key={section.id}
               onClick={() => onSectionChange(section.id)}
               className={cn(
-                "w-full flex items-center gap-3 px-4 py-3 text-left rounded-lg transition-all duration-200",
-                "hover:bg-accent hover:text-accent-foreground",
+                "w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 text-left group",
                 isActive
-                  ? "bg-primary/10 text-primary border border-primary/20 font-medium"
-                  : "text-muted-foreground"
+                  ? "shadow-sm bg-card"
+                  : "border-transparent text-sidebar-muted-foreground hover:bg-muted/30 hover:text-foreground"
               )}
             >
-              <FontAwesomeIcon icon={section.icon} className="h-4 w-4" />
-              <span className="flex-1">{section.label}</span>
-              {isActive && (
-                <FontAwesomeIcon icon={faChevronRight} className="h-3 w-3" />
-              )}
+              <FontAwesomeIcon
+                icon={section.icon}
+                className={cn("h-5 w-5 flex-shrink-0 ml-2 mr-2", isActive ? "text-primary" : "")}
+              />
+              <div className="flex-1 min-w-0">
+                <div className={cn("text-base font-bold", isActive ? "text-primary" : "")}>
+                  {section.label}
+                </div>
+                <div className="text-[12px] text-muted-foreground -mt-0.5 truncate">
+                  {section.description}
+                </div>
+              </div>
+              <ChevronRight
+                className={cn(
+                  "h-4 w-4 flex-shrink-0 transition-opacity",
+                  isActive ? "text-primary opacity-100" : "opacity-0"
+                )}
+              />
             </button>
           );
         })}

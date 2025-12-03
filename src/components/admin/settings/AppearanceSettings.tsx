@@ -14,16 +14,16 @@ import {
 } from "@/components/ui/select";
 import { useTheme } from "next-themes";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSun, faMoon, faPlus } from "@fortawesome/free-solid-svg-icons";
+import { faPlus } from "@fortawesome/free-solid-svg-icons";
+import { Moon, Sun, Monitor, Palette, Type, Edit2, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { hexToHsl, hslToCssString, hslToCssHsl } from "@/lib/color-utils";
 import { ColorModal } from "./ColorModal";
 import { cn } from "@/lib/utils";
-
-const themeOptions = [
-  { value: "light", label: "Light", icon: faSun },
-  { value: "dark", label: "Dark", icon: faMoon },
-];
+import type { FontConfig } from "@/types/fonts";
+import { fontOptions, getFontVariable } from "@/lib/fonts";
+import { parseFontFamily, serializeFontFamily, generateFontCSS, getDefaultFontFamily } from "@/lib/font-utils";
+import { useToast } from "@/hooks/use-toast";
 
 // Color type from database
 type DatabaseColor = {
@@ -47,6 +47,7 @@ type Color = {
 
 export function AppearanceSettings() {
   const { theme, setTheme } = useTheme();
+  const { toast } = useToast();
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [userColors, setUserColors] = useState<Color[]>([]);
@@ -54,6 +55,9 @@ export function AppearanceSettings() {
   const [isColorModalOpen, setIsColorModalOpen] = useState(false);
   const [editingColor, setEditingColor] = useState<Color | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [fontConfig, setFontConfig] = useState<FontConfig>({
+    admin: { heading: "geist-sans", body: "geist-sans" },
+  });
 
   // Convert database color to component color
   const dbColorToComponent = (dbColor: DatabaseColor): Color => {
@@ -68,6 +72,55 @@ export function AppearanceSettings() {
       },
       value: hslToCssHsl(dbColor.hsl_h, dbColor.hsl_s, dbColor.hsl_l),
     };
+  };
+
+  // Apply fonts to CSS variables
+  const applyFontsToCSS = (fonts: FontConfig) => {
+    if (typeof document === "undefined") return;
+    const root = document.documentElement;
+    const css = generateFontCSS(fonts);
+    
+    // Remove existing font style tags
+    const existingStyles = [
+      document.getElementById("font-family-inline"),
+      document.getElementById("font-family-script"),
+      document.getElementById("font-family-session"),
+      document.getElementById("font-family-inline-server"),
+    ].filter(Boolean) as HTMLElement[];
+    
+    existingStyles.forEach((style) => style.remove());
+    
+    // Apply fonts via CSS variables (admin only)
+    const adminHeadingVar = getFontVariable(fonts.admin.heading);
+    const adminBodyVar = getFontVariable(fonts.admin.body);
+    
+    root.style.setProperty("--font-family-admin-heading", `var(${adminHeadingVar})`, "important");
+    root.style.setProperty("--font-family-admin-body", `var(${adminBodyVar})`, "important");
+    
+    // Apply font directly to body element
+    const body = document.body;
+    if (body) {
+      body.style.setProperty("font-family", `var(${adminBodyVar}),system-ui,sans-serif`, "important");
+    }
+    
+    // Inject style tag
+    const style = document.createElement("style");
+    style.id = "font-family-client";
+    style.textContent = `:root{--font-family-admin-heading:var(${adminHeadingVar});--font-family-admin-body:var(${adminBodyVar});}html.preset-admin body,html.preset-admin body *,.preset-admin body,.preset-admin body *{font-family:var(${adminBodyVar}),system-ui,sans-serif!important;}html.preset-admin body h1,html.preset-admin body h2,html.preset-admin body h3,html.preset-admin body h4,html.preset-admin body h5,html.preset-admin body h6,.preset-admin h1,.preset-admin h2,.preset-admin h3,.preset-admin h4,.preset-admin h5,.preset-admin h6{font-family:var(${adminHeadingVar}),system-ui,sans-serif!important;}`;
+    document.head.appendChild(style);
+    
+    // Save to sessionStorage and cookie
+    try {
+      const fontJson = serializeFontFamily(fonts);
+      sessionStorage.setItem("font-family-json", fontJson);
+      
+      // Save to cookie
+      const expires = new Date();
+      expires.setFullYear(expires.getFullYear() + 1);
+      document.cookie = `font-family-json=${encodeURIComponent(fontJson)}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
+    } catch (e) {
+      // Storage not available
+    }
   };
 
   // Apply color to CSS variable
@@ -85,13 +138,16 @@ export function AppearanceSettings() {
     
     existingStyles.forEach((style) => style.remove());
     
-    // Apply color with !important to override any remaining styles
+    // Apply brand color variables and primary (which uses brand variables)
+    root.style.setProperty("--brand-h", color.hsl.h.toString(), "important");
+    root.style.setProperty("--brand-s", color.hsl.s.toString(), "important");
+    root.style.setProperty("--brand-l", color.hsl.l.toString(), "important");
     root.style.setProperty("--primary", cssValue, "important");
     
     // Also inject a new style tag to ensure it persists
     const style = document.createElement("style");
     style.id = "primary-color-client";
-    style.textContent = `:root,html,body{--primary:${cssValue}!important;}`;
+    style.textContent = `:root,html,body,.preset-admin,.preset-admin *,.preset-admin.dark,.preset-admin.dark *{--brand-h:${color.hsl.h}!important;--brand-s:${color.hsl.s}!important;--brand-l:${color.hsl.l}!important;--primary:${cssValue}!important;}`;
     document.head.appendChild(style);
     
     // Save to sessionStorage for InstantColorApply fallback
@@ -107,6 +163,10 @@ export function AppearanceSettings() {
       const expires = new Date();
       expires.setFullYear(expires.getFullYear() + 1);
       document.cookie = `primary-color-hsl=${encodeURIComponent(cssValue)}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
+      // Also save brand color variables to cookies
+      document.cookie = `brand-color-h=${encodeURIComponent(color.hsl.h.toString())}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
+      document.cookie = `brand-color-s=${encodeURIComponent(color.hsl.s.toString())}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
+      document.cookie = `brand-color-l=${encodeURIComponent(color.hsl.l.toString())}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
     } catch (e) {
       // Cookie setting failed
     }
@@ -144,7 +204,7 @@ export function AppearanceSettings() {
         const componentColors = (colors || []).map(dbColorToComponent);
         setUserColors(componentColors);
 
-        // Try to load selected color from user_settings
+        // Try to load selected color and fonts from user_settings
         const { data: settings } = await (supabase
           .from("user_settings") as any)
           .select("active_theme_id")
@@ -154,11 +214,13 @@ export function AppearanceSettings() {
         if (settings?.active_theme_id) {
           const { data: theme } = await (supabase
             .from("user_themes") as any)
-            .select("primary_color_id")
+            .select("primary_color_id, font_family")
             .eq("id", settings.active_theme_id)
             .single();
 
-          if (theme?.primary_color_id) {
+          if (theme) {
+            // Load color
+            if (theme.primary_color_id) {
             const { data: color } = await (supabase
               .from("user_colors") as any)
               .select("*")
@@ -173,6 +235,17 @@ export function AppearanceSettings() {
               // Fallback to first color
               setSelectedColor(componentColors[0]);
               applyColorToCSS(componentColors[0]);
+              }
+            } else if (componentColors.length > 0) {
+              setSelectedColor(componentColors[0]);
+              applyColorToCSS(componentColors[0]);
+            }
+
+            // Load fonts
+            if (theme.font_family) {
+              const fonts = parseFontFamily(theme.font_family);
+              setFontConfig(fonts);
+              applyFontsToCSS(fonts);
             }
           } else if (componentColors.length > 0) {
             setSelectedColor(componentColors[0]);
@@ -229,6 +302,7 @@ export function AppearanceSettings() {
         if (updateError) throw updateError;
         themeId = existingTheme.id;
       } else {
+        const defaultFontJson = serializeFontFamily(getDefaultFontFamily());
         const { data: newTheme, error: themeError } = await (supabase
           .from("user_themes") as any)
           .insert({
@@ -237,7 +311,7 @@ export function AppearanceSettings() {
             primary_color_id: colorId,
             secondary_color_id: colorId,
             accent_color_id: colorId,
-            font_family: "system",
+            font_family: defaultFontJson,
           })
           .select("id")
           .single();
@@ -266,14 +340,198 @@ export function AppearanceSettings() {
     }
   };
 
+  const handleFontChange = async (type: "heading" | "body", fontId: string) => {
+    const newFontConfig: FontConfig = {
+      ...fontConfig,
+      admin: {
+        ...fontConfig.admin,
+        [type]: fontId as any,
+      },
+    };
+    
+    setFontConfig(newFontConfig);
+    applyFontsToCSS(newFontConfig);
+    
+    // Save to database
+    if (!userId) return;
+    
+    try {
+      const supabase = createClient();
+      const fontJson = serializeFontFamily(newFontConfig);
+
+      // Create or update theme
+      const { data: existingTheme } = await (supabase
+        .from("user_themes") as any)
+        .select("id")
+        .eq("user_id", userId)
+        .eq("name", "Default Theme")
+        .maybeSingle();
+
+      let themeId: string;
+      if (existingTheme) {
+        const { error: updateError } = await (supabase
+          .from("user_themes") as any)
+          .update({
+            font_family: fontJson,
+          })
+          .eq("id", existingTheme.id);
+        if (updateError) throw updateError;
+        themeId = existingTheme.id;
+      } else {
+        // Create new theme with default color if needed
+        const defaultColorId = selectedColor?.id || userColors[0]?.id;
+        if (!defaultColorId) {
+          throw new Error("No color available");
+        }
+        
+        const { data: newTheme, error: themeError } = await (supabase
+          .from("user_themes") as any)
+          .insert({
+            user_id: userId,
+            name: "Default Theme",
+            primary_color_id: defaultColorId,
+            secondary_color_id: defaultColorId,
+            accent_color_id: defaultColorId,
+            font_family: fontJson,
+          })
+          .select("id")
+          .single();
+
+        if (themeError) throw themeError;
+        themeId = newTheme.id;
+      }
+
+      // Update user_settings
+      const { error: settingsError } = await (supabase
+        .from("user_settings") as any)
+        .upsert(
+          {
+            user_id: userId,
+            active_theme_id: themeId,
+          },
+          {
+            onConflict: "user_id",
+          }
+        );
+
+      if (settingsError) throw settingsError;
+    } catch (error) {
+      console.error("Error saving font preference:", error);
+      // Don't show alert for automatic saves, just log the error
+    }
+  };
+
   const handleAddColor = () => {
     setEditingColor(null);
     setIsColorModalOpen(true);
   };
 
-  const handleEditColor = (color: Color) => {
+  const handleEditColor = (color: Color, e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+    }
     setEditingColor(color);
     setIsColorModalOpen(true);
+  };
+
+  const handleDeleteColor = async (color: Color, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!userId) return;
+
+    // Confirm deletion
+    if (!confirm(`Are you sure you want to delete "${color.name}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const supabase = createClient();
+      
+      // Check if color is being used in any theme
+      const { data: themesUsingColor, error: themesError } = await (supabase
+        .from("user_themes") as any)
+        .select("id, name, primary_color_id, secondary_color_id, accent_color_id")
+        .eq("user_id", userId)
+        .or(`primary_color_id.eq.${color.id},secondary_color_id.eq.${color.id},accent_color_id.eq.${color.id}`);
+
+      if (themesError) throw themesError;
+
+      if (themesUsingColor && themesUsingColor.length > 0) {
+        // Color is being used in themes, we need to update them first
+        // Get the first available color to replace it with
+        const replacementColor = userColors.find((c) => c.id !== color.id);
+        
+        if (!replacementColor) {
+          toast({
+            title: "Cannot delete color",
+            description: "This color is being used in your theme and there are no other colors available. Please add another color first.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Update all themes that use this color
+        for (const theme of themesUsingColor) {
+          const updateData: any = {};
+          if (theme.primary_color_id === color.id) {
+            updateData.primary_color_id = replacementColor.id;
+          }
+          if (theme.secondary_color_id === color.id) {
+            updateData.secondary_color_id = replacementColor.id;
+          }
+          if (theme.accent_color_id === color.id) {
+            updateData.accent_color_id = replacementColor.id;
+          }
+
+          if (Object.keys(updateData).length > 0) {
+            const { error: updateError } = await (supabase
+              .from("user_themes") as any)
+              .update(updateData)
+              .eq("id", theme.id);
+
+            if (updateError) throw updateError;
+          }
+        }
+
+        // If the deleted color was the selected one, switch to replacement
+        if (selectedColor?.id === color.id) {
+          await handleColorChange(replacementColor);
+        }
+      }
+
+      // Now delete the color
+      const { error } = await (supabase
+        .from("user_colors") as any)
+        .delete()
+        .eq("id", color.id)
+        .eq("user_id", userId);
+
+      if (error) throw error;
+
+      // Remove from local state
+      setUserColors((prev) => prev.filter((c) => c.id !== color.id));
+      
+      // If deleted color was selected and we didn't already switch, select the first available
+      if (selectedColor?.id === color.id && (!themesUsingColor || themesUsingColor.length === 0)) {
+        const remainingColors = userColors.filter((c) => c.id !== color.id);
+        if (remainingColors.length > 0) {
+          await handleColorChange(remainingColors[0]);
+        } else {
+          setSelectedColor(null);
+        }
+      }
+
+      toast({
+        title: "Color deleted",
+        description: `"${color.name}" has been successfully deleted.`,
+      });
+    } catch (error: any) {
+      console.error("Failed to delete color:", error);
+      toast({
+        title: "Failed to delete color",
+        description: error?.message || "An error occurred while deleting the color. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleSaveColor = async (colorData: { hex: string; name: string }) => {
@@ -363,183 +621,276 @@ export function AppearanceSettings() {
 
   return (
     <div className="space-y-6">
-      {/* Theme Selection */}
-      <Card className="relative overflow-hidden shadow-lg">
-        {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.02] via-transparent to-transparent pointer-events-none" />
-        {/* Sparkles */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="sparkle" style={{ top: "20%", left: "8%", animationDelay: "1s" }} />
-          <div className="sparkle" style={{ top: "65%", right: "12%", animationDelay: "4s" }} />
-          <div className="sparkle" style={{ top: "40%", left: "15%", animationDelay: "7s" }} />
-        </div>
+      <Card className="relative overflow-hidden shadow-lg border-0 rounded-3xl">
 
-        <CardHeader>
-          <CardTitle className="relative">Theme</CardTitle>
-          <CardDescription className="relative">
-            Choose your preferred theme mode.
-          </CardDescription>
+        <CardHeader className="relative">
+          <CardTitle className="text-2xl flex items-center gap-2">
+            <Palette className="h-6 w-6 text-primary" />
+            Appearance
+          </CardTitle>
         </CardHeader>
-        <CardContent className="relative space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="theme">Theme Mode</Label>
+        <CardContent className="space-y-6 relative">
+          {/* Theme Section */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <div className="font-medium">Theme</div>
+              <div className="text-sm text-muted-foreground">Choose your interface theme</div>
+            </div>
             <Select value={currentTheme} onValueChange={handleThemeChange}>
-              <SelectTrigger id="theme">
-                <SelectValue placeholder="Select theme" />
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <div className="flex items-center gap-2">
+                  {currentTheme === "dark" ? (
+                    <Moon className="h-4 w-4" />
+                  ) : currentTheme === "light" ? (
+                    <Sun className="h-4 w-4" />
+                  ) : (
+                    <Monitor className="h-4 w-4" />
+                  )}
+                  <SelectValue>
+                    {currentTheme === "dark" ? "Dark" : currentTheme === "light" ? "Light" : "System"}
+                  </SelectValue>
+                </div>
               </SelectTrigger>
               <SelectContent>
-                {themeOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
+                <SelectItem value="light">
+                  <div className="flex items-center gap-2">
+                    <Sun className="h-4 w-4" />
+                    <span>Light</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="dark">
+                  <div className="flex items-center gap-2">
+                    <Moon className="h-4 w-4" />
+                    <span>Dark</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="system">
                     <div className="flex items-center gap-2">
-                      <FontAwesomeIcon icon={option.icon} className="h-4 w-4" />
-                      <span>{option.label}</span>
+                    <Monitor className="h-4 w-4" />
+                    <span>System</span>
                     </div>
                   </SelectItem>
-                ))}
               </SelectContent>
             </Select>
           </div>
 
-          <div className="grid grid-cols-3 gap-3 pt-2">
-            {themeOptions.map((option) => {
-              const isActive = currentTheme === option.value;
-              return (
-                <button
-                  key={option.value}
-                  onClick={() => handleThemeChange(option.value)}
-                  className={cn(
-                    "flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all",
-                    isActive
-                      ? "border-primary bg-primary/5"
-                      : "border-border hover:border-primary/50 hover:bg-accent"
-                  )}
-                >
-                  <FontAwesomeIcon
-                    icon={option.icon}
+          {/* Brand Color Section */}
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2">
+                <Palette className="h-5 w-5 text-primary" />
+                <div className="font-medium text-lg">Brand Color</div>
+              </div>
+              <div className="text-sm text-muted-foreground">Choose your vibe ✨</div>
+            </div>
+
+            {/* Current Color Display */}
+            {selectedColor && (
+              <div className="mb-6 p-5 rounded-xl border-2 border-border/50 bg-muted/10 relative overflow-hidden group hover:border-primary/30 transition-all duration-300">
+                <div className="relative flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-5">
+                  <div className="relative group/color flex-shrink-0">
+                    <div
+                      className="w-20 h-20 rounded-xl border-[3px] border-white/90 shadow-2xl transition-all duration-300 group-hover/color:scale-110 group-hover/color:shadow-[0_0_30px_rgba(0,0,0,0.3)]"
+                      style={{ backgroundColor: selectedColor.hex }}
+                    />
+                    <div
+                      className="absolute inset-0 rounded-xl blur-xl opacity-60 transition-opacity duration-300 group-hover/color:opacity-80"
+                      style={{ backgroundColor: selectedColor.hex }}
+                    />
+                    {/* Sparkle effect */}
+                    <div className="absolute -top-1 -right-1 w-4 h-4 opacity-0 group-hover/color:opacity-100 transition-opacity duration-300">
+                      <div className="absolute inset-0 bg-white rounded-full blur-sm animate-pulse" />
+                      <div className="absolute inset-0.5 bg-primary rounded-full" />
+                    </div>
+                  </div>
+                  <div className="flex-1 w-full min-w-0">
+                    <div className="text-sm font-semibold mb-1.5 flex flex-wrap items-center gap-2">
+                      Current Color
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                        {selectedColor.name}
+                      </span>
+                    </div>
+                    <div className="text-sm text-muted-foreground font-mono font-medium break-all">
+                      {selectedColor.hex}
+                    </div>
+                  </div>
+                  <Button
+                    onClick={handleAddColor}
+                    variant="outline"
                     className={cn(
-                      "h-5 w-5",
-                      isActive ? "text-primary" : "text-muted-foreground"
-                    )}
-                  />
-                  <span
-                    className={cn(
-                      "text-sm font-medium",
-                      isActive ? "text-primary" : "text-muted-foreground"
+                      "relative overflow-hidden group/btn hover:border-primary/50 transition-all duration-300",
+                      "w-full sm:w-auto"
                     )}
                   >
-                    {option.label}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Brand Colors */}
-      <Card className="relative overflow-hidden shadow-lg">
-        {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.02] via-transparent to-transparent pointer-events-none" />
-        {/* Sparkles */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="sparkle" style={{ top: "25%", left: "6%", animationDelay: "2s" }} />
-          <div className="sparkle" style={{ top: "70%", right: "9%", animationDelay: "5s" }} />
-        </div>
-
-        <CardHeader>
-          <CardTitle className="relative">Brand Colors</CardTitle>
-          <CardDescription className="relative">
-            Customize your primary brand color. Add colors using the button below.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="relative space-y-4">
-          <div className="space-y-2">
-            <Label>Primary Color</Label>
-            {userColors.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <p className="mb-4">No colors yet. Add your first color to get started!</p>
-                <Button onClick={handleAddColor} variant="outline">
-                  <FontAwesomeIcon icon={faPlus} className="h-4 w-4 mr-2" />
-                  Add Color
-                </Button>
+                    <div
+                      className="absolute inset-0 opacity-0 group-hover/btn:opacity-10 transition-opacity duration-300"
+                      style={{ backgroundColor: selectedColor.hex }}
+                    />
+                    <FontAwesomeIcon icon={faPlus} className="h-4 w-4 mr-2 relative z-10" />
+                    <span className="relative z-10">Add Color</span>
+                  </Button>
+                </div>
               </div>
-            ) : (
-              <div className="grid grid-cols-3 gap-3">
+            )}
+
+            {/* Brand Colors Grid */}
+            {userColors.length > 0 ? (
+              <div className="mb-4">
+                <div className="text-sm font-semibold mb-4 flex items-center gap-2">
+                  <span>Brand Colors</span>
+                  <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
+                    {userColors.length}
+                  </span>
+          </div>
+                <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-7 lg:grid-cols-8 gap-3">
                 {userColors.map((color) => {
                   const isActive = selectedColor?.id === color.id;
                   return (
+                      <div key={color.id} className="relative group">
                     <button
-                      key={color.id}
                       onClick={() => handleColorChange(color)}
-                      onDoubleClick={() => handleEditColor(color)}
                       className={cn(
-                        "flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all",
-                        isActive
-                          ? "border-primary bg-primary/5"
-                          : "border-border hover:border-primary/50 hover:bg-accent"
+                            "relative w-full aspect-square rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-xl",
+                            "border-2 border-white/50 shadow-md",
+                            isActive &&
+                              "ring-3 ring-primary ring-offset-1 ring-offset-background scale-105 shadow-xl"
                       )}
-                      title="Double-click to edit"
-                    >
+                          style={{
+                            backgroundColor: color.hex,
+                            boxShadow: isActive
+                              ? `0 0 15px ${color.hex}40, 0 8px 20px rgba(0,0,0,0.15)`
+                              : undefined,
+                          }}
+                          aria-label={`Select ${color.name || color.hex}`}
+                        >
+                          {/* Glow effect on hover */}
                       <div
-                        className="w-12 h-12 rounded-full border-2 border-border"
+                            className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-30 transition-opacity duration-300 blur-lg"
                         style={{ backgroundColor: color.hex }}
                       />
-                      <span
-                        className={cn(
-                          "text-sm font-medium text-center",
-                          isActive ? "text-primary" : "text-muted-foreground"
-                        )}
-                      >
+
+                          {/* Selected indicator */}
+                          {isActive && (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="relative">
+                                <div className="h-2.5 w-2.5 rounded-full bg-white shadow-md animate-pulse" />
+                                <div className="absolute inset-0 h-2.5 w-2.5 rounded-full bg-white/50 animate-ping" />
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Sparkle decoration */}
+                          <div className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <div className="w-2 h-2 bg-white/90 rounded-full blur-[1px]" />
+                          </div>
+                        </button>
+
+                        {/* Edit and Delete buttons */}
+                        <div className="absolute -top-2 -right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200 z-10">
+                          <button
+                            onClick={(e) => handleEditColor(color, e)}
+                            className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-blue-600 hover:scale-110 active:scale-95 transition-all duration-200 shadow-md"
+                            title="Edit color"
+                          >
+                            <Edit2 className="w-3 h-3" />
+                          </button>
+                          <button
+                            onClick={(e) => handleDeleteColor(color, e)}
+                            className="w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 hover:scale-110 active:scale-95 transition-all duration-200 shadow-md"
+                            title="Delete color"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+
+                        {/* Color name display */}
+                        <div className="mt-2 text-center">
+                          <div className="text-xs font-medium text-foreground truncate leading-tight">
                         {color.name}
-                      </span>
-                    </button>
+                          </div>
+                          <div className="text-[10px] text-muted-foreground font-mono mt-0.5 truncate leading-tight">
+                            {color.hex}
+                          </div>
+                        </div>
+                      </div>
                   );
                 })}
-                {/* Add Color Button */}
-                <button
-                  onClick={handleAddColor}
-                  className="flex flex-col items-center justify-center gap-2 p-4 rounded-lg border-2 border-dashed border-border hover:border-primary/50 hover:bg-accent transition-all"
-                >
-                  <div className="w-12 h-12 rounded-full border-2 border-border flex items-center justify-center bg-muted/50">
-                    <FontAwesomeIcon icon={faPlus} className="h-5 w-5 text-muted-foreground" />
+                </div>
                   </div>
-                  <span className="text-sm font-medium text-muted-foreground">Add Color</span>
-                </button>
+            ) : (
+              <div className="text-sm text-muted-foreground py-8 text-center rounded-xl border-2 border-dashed border-border/50 bg-muted/20">
+                <Palette className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p className="font-medium mb-1">No saved colors yet</p>
+                <p className="text-xs">Click "Add Color" to create your first custom color!</p>
               </div>
             )}
           </div>
 
-          {selectedColor && (
-            <>
-              <Separator />
+          {/* Admin Fonts Section */}
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2">
+                <Type className="h-5 w-5 text-primary" />
+                <div className="font-medium text-lg">Admin Fonts</div>
+              </div>
+              <div className="text-sm text-muted-foreground">Customize typography</div>
+            </div>
 
-              {/* Preview Section */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Preview</Label>
-                <div className="p-4 rounded-lg border bg-card space-y-3">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="w-10 h-10 rounded-full"
-                      style={{ backgroundColor: selectedColor.hex }}
-                    />
-                    <div className="flex-1">
-                      <div className="h-3 rounded bg-primary/20 mb-2" style={{ width: "60%" }} />
-                      <div className="h-2 rounded bg-muted" style={{ width: "40%" }} />
+                <Label htmlFor="admin-heading" className="text-sm font-medium">
+                  Heading Font
+                </Label>
+                <Select
+                  value={fontConfig.admin.heading}
+                  onValueChange={(value) => handleFontChange("heading", value)}
+                >
+                  <SelectTrigger id="admin-heading" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {fontOptions.map((font) => (
+                      <SelectItem key={font.id} value={font.id}>
+                        <span
+                          style={{
+                            fontFamily: `var(${getFontVariable(font.id)}), system-ui, sans-serif`,
+                          }}
+                        >
+                          {font.label}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                     </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button size="sm" style={{ backgroundColor: selectedColor.hex }}>
-                      Primary Button
-                    </Button>
-                    <Button size="sm" variant="outline">
-                      Secondary Button
-                    </Button>
+              <div className="space-y-2">
+                <Label htmlFor="admin-body" className="text-sm font-medium">
+                  Body Font
+                </Label>
+                <Select
+                  value={fontConfig.admin.body}
+                  onValueChange={(value) => handleFontChange("body", value)}
+                >
+                  <SelectTrigger id="admin-body" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {fontOptions.map((font) => (
+                      <SelectItem key={font.id} value={font.id}>
+                        <span
+                          style={{
+                            fontFamily: `var(${getFontVariable(font.id)}), system-ui, sans-serif`,
+                          }}
+                        >
+                          {font.label}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                   </div>
                 </div>
               </div>
-
-            </>
-          )}
         </CardContent>
       </Card>
 

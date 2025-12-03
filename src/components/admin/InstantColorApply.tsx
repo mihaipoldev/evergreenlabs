@@ -53,19 +53,40 @@ export function InstantColorApply() {
       
       if (savedColor) {
         try {
+          // Parse HSL values from saved color
+          const hslMatch = savedColor.match(/(\d+)\s+(\d+)%\s+(\d+)%/);
           const root = document.documentElement;
+          
+          if (hslMatch) {
+            const [, h, s, l] = hslMatch;
+            // Set brand color variables
+            root.style.setProperty('--brand-h', h, 'important');
+            root.style.setProperty('--brand-s', s, 'important');
+            root.style.setProperty('--brand-l', l, 'important');
+          }
+          
+          // Also set primary (for backward compatibility)
           root.style.setProperty('--primary', savedColor, 'important');
           
           // Also apply to html element directly
           var html = document.getElementsByTagName('html')[0];
-          if (html) {
+          if (html && hslMatch) {
+            const [, h, s, l] = hslMatch;
+            html.style.setProperty('--brand-h', h, 'important');
+            html.style.setProperty('--brand-s', s, 'important');
+            html.style.setProperty('--brand-l', l, 'important');
             html.style.setProperty('--primary', savedColor, 'important');
           }
           
           // Inject style tag at the very beginning of head with maximum specificity
           var style = document.createElement('style');
           style.id = 'primary-color-session';
-          style.textContent = ':root,:root *,html,html *,body,body *,.preset-admin,.preset-admin *{--primary:' + savedColor + '!important;}';
+          if (hslMatch) {
+            const [, h, s, l] = hslMatch;
+            style.textContent = ':root,:root *,html,html *,body,body *,.preset-admin,.preset-admin *,.preset-admin.dark,.preset-admin.dark *{--brand-h:' + h + '!important;--brand-s:' + s + '!important;--brand-l:' + l + '!important;--primary:' + savedColor + '!important;}';
+          } else {
+            style.textContent = ':root,:root *,html,html *,body,body *,.preset-admin,.preset-admin *{--primary:' + savedColor + '!important;}';
+          }
           
           // Insert immediately - this must be first in head
           if (document.head) {

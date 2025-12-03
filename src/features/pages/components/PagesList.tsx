@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Fragment } from "react";
 import Link from "next/link";
 import { format } from "date-fns";
 import {
@@ -101,7 +101,7 @@ export function PagesList({ initialPages }: PagesListProps) {
 
         <AdminTable>
           <TableHeader>
-            <TableRow className="bg-muted/50 border-b">
+            <TableRow className="bg-card border-b">
               <TableHead className="pl-4 w-24 font-bold">Icon</TableHead>
               <TableHead className="w-64 max-w-64 font-bold">Title</TableHead>
               <TableHead className="font-bold">Slug</TableHead>
@@ -120,10 +120,9 @@ export function PagesList({ initialPages }: PagesListProps) {
               </TableRow>
             ) : (
               filteredPages.map((page) => (
-                <>
+                <Fragment key={page.id}>
                   {/* Mobile Layout */}
                   <TableRow
-                    key={`${page.id}-mobile`}
                     className="md:hidden group cursor-pointer hover:bg-muted/50 border-b border-border/50"
                   >
                     <TableCell className="px-3 md:pl-4 md:pr-4 py-4" colSpan={5}>
@@ -164,7 +163,6 @@ export function PagesList({ initialPages }: PagesListProps) {
 
                   {/* Desktop Layout */}
                   <TableRow
-                    key={`${page.id}-desktop`}
                     className="table-row-responsive group cursor-pointer hover:bg-muted/50"
                   >
                     <TableCell className="pl-4">
@@ -199,7 +197,7 @@ export function PagesList({ initialPages }: PagesListProps) {
                       </div>
                     </TableCell>
                   </TableRow>
-                </>
+                </Fragment>
               ))
             )}
           </TableBody>

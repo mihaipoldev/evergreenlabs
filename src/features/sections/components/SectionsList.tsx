@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Fragment } from "react";
 import Link from "next/link";
 import {
   AdminTable,
@@ -125,7 +125,7 @@ export function SectionsList({ initialSections }: SectionsListProps) {
               </TableRow>
             ) : (
               filteredSections.map((section) => (
-                <>
+                <Fragment key={section.id}>
                   {/* Mobile Layout */}
                     <TableRow
                       key={`${section.id}-mobile`}
@@ -223,7 +223,7 @@ export function SectionsList({ initialSections }: SectionsListProps) {
                         </div>
                       </TableCell>
                   </TableRow>
-                </>
+                </Fragment>
               ))
             )}
           </TableBody>

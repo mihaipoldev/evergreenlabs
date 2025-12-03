@@ -5,6 +5,7 @@ type SupabaseClient = Awaited<ReturnType<typeof createClient>>;
 
 /**
  * Get a page by its slug
+ * Returns null if page is not found (instead of throwing)
  */
 export async function getPageBySlug(slug: string) {
   const supabase = await createClient();
@@ -12,7 +13,7 @@ export async function getPageBySlug(slug: string) {
     .from("pages")
     .select("*")
     .eq("slug", slug)
-    .single();
+    .maybeSingle();
 
   if (error) {
     throw error;

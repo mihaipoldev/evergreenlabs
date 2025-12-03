@@ -2,7 +2,6 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { AdminPageTitle } from "@/components/admin/AdminPageTitle";
 import { SettingsSidebar } from "@/components/admin/settings/SettingsSidebar";
 import { SettingsContent } from "@/components/admin/settings/SettingsContent";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -48,11 +47,7 @@ function SettingsPageContent() {
 
   return (
     <>
-      <AdminPageTitle
-        title="Settings"
-        description="Configure application settings and preferences."
-      />
-      <div className="mt-6">
+      <div>
         {isMobile ? (
           <div className="space-y-6">
             <Tabs value={activeSection} onValueChange={(value) => handleSectionChange(value as Section)}>
@@ -64,7 +59,7 @@ function SettingsPageContent() {
             <SettingsContent activeSection={activeSection} />
           </div>
         ) : (
-          <div className="flex gap-8">
+          <div className="flex gap-3">
             <SettingsSidebar
               activeSection={activeSection}
               onSectionChange={handleSectionChange}
@@ -81,16 +76,10 @@ export default function SettingsPage() {
   return (
     <Suspense
       fallback={
-        <>
-          <AdminPageTitle
-            title="Settings"
-            description="Configure application settings and preferences."
-          />
-          <div className="mt-6 space-y-6">
-            <div className="h-8 bg-muted animate-pulse rounded" />
-            <div className="h-64 bg-muted animate-pulse rounded-lg" />
-          </div>
-        </>
+        <div className="space-y-6">
+          <div className="h-8 bg-muted animate-pulse rounded" />
+          <div className="h-64 bg-muted animate-pulse rounded-lg" />
+        </div>
       }
     >
       <SettingsPageContent />

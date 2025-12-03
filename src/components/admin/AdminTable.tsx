@@ -17,7 +17,7 @@ export function AdminTable({ children, className }: AdminTableProps) {
   return (
     <div
       className={cn(
-        "w-full overflow-x-auto rounded-xl bg-card/50 text-card-foreground dark:bg-card/30 shadow-lg transition-all duration-300 hover:shadow-xl border border-border"
+        "w-full overflow-x-auto rounded-xl text-card-foreground bg-card shadow-lg transition-all duration-300 hover:shadow-xl"
       )}
     >
       <table
