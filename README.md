@@ -84,6 +84,7 @@ Create a `.env.local` file in the root directory with the following variables:
 
 - `NEXT_PUBLIC_SUPABASE_URL` - Your Supabase project URL
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Your Supabase anonymous key
+- `SUPABASE_SERVICE_ROLE_KEY` - Your Supabase service role key (used for public analytics tracking to bypass RLS)
 
 ### Bunny CDN (Required for file uploads)
 
@@ -96,6 +97,7 @@ Example `.env.local`:
 ```env
 NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
 BUNNY_STORAGE_ZONE=your-storage-zone
 BUNNY_STORAGE_PASSWORD=your-storage-password
 BUNNY_PULL_ZONE_URL=https://yourdomain.b-cdn.net

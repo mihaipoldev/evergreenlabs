@@ -5,44 +5,65 @@ import { parseFontFamily, serializeFontFamily } from "@/lib/font-utils";
 import { getFontVariable } from "@/lib/font-variables";
 
 export async function middleware(request: NextRequest) {
-  const pathname = request.nextUrl.pathname;
-  let supabaseResponse = NextResponse.next({
-    request,
-  });
+  try {
+    const pathname = request.nextUrl.pathname;
+    let supabaseResponse = NextResponse.next({
+      request,
+    });
 
-  // Set pathname in headers for layout to use
-  supabaseResponse.headers.set("x-pathname", pathname);
+    // Set pathname in headers for layout to use
+    supabaseResponse.headers.set("x-pathname", pathname);
 
-  const supabase = createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
-            request.cookies.set(name, value)
-          );
-          supabaseResponse = NextResponse.next({
-            request,
-          });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          );
-        },
-      },
+    // Only create Supabase client and check auth for admin routes or login
+    // Skip database queries entirely for public pages to avoid blocking
+    const isAdminRoute = pathname.startsWith("/admin");
+    const isLoginRoute = pathname === "/login";
+    
+    let user = null;
+  
+  if (isAdminRoute || isLoginRoute) {
+    try {
+      const supabase = createServerClient<Database>(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          cookies: {
+            getAll() {
+              return request.cookies.getAll();
+            },
+            setAll(cookiesToSet) {
+              cookiesToSet.forEach(({ name, value, options }) =>
+                request.cookies.set(name, value)
+              );
+              supabaseResponse = NextResponse.next({
+                request,
+              });
+              cookiesToSet.forEach(({ name, value, options }) =>
+                supabaseResponse.cookies.set(name, value, options)
+              );
+            },
+          },
+        }
+      );
+
+      // Refresh the auth token - with error handling
+      try {
+        const result = await supabase.auth.getUser();
+        user = result.data.user;
+      } catch (error) {
+        // If auth check fails, treat as unauthenticated
+        // This prevents blocking the entire site
+        user = null;
+      }
+    } catch (error) {
+      // If Supabase client creation fails, continue without auth
+      console.warn('Failed to create Supabase client:', error);
+      user = null;
     }
-  );
-
-  // Refresh the auth token
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  }
 
   // Protect admin routes
-  if (pathname.startsWith("/admin")) {
+  if (isAdminRoute) {
     if (!user) {
       // Redirect to login if not authenticated
       const url = request.nextUrl.clone();
@@ -53,32 +74,77 @@ export async function middleware(request: NextRequest) {
     // For admin pages, inject color style tag into HTML response
     if (pathname !== "/admin/login") {
       try {
-        // Get user settings with active theme
-        const { data: settings } = await (supabase
-          .from("user_settings") as any)
-          .select("active_theme_id")
-          .eq("user_id", user.id)
-          .maybeSingle();
+        // Re-create supabase client for queries (it was scoped above)
+        const supabase = createServerClient<Database>(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+          {
+            cookies: {
+              getAll() {
+                return request.cookies.getAll();
+              },
+              setAll(cookiesToSet) {
+                cookiesToSet.forEach(({ name, value, options }) =>
+                  request.cookies.set(name, value)
+                );
+                supabaseResponse = NextResponse.next({
+                  request,
+                });
+                cookiesToSet.forEach(({ name, value, options }) =>
+                  supabaseResponse.cookies.set(name, value, options)
+                );
+              },
+            },
+          }
+        );
+
+        // Get user settings with active theme - with error handling
+        let settings = null;
+        try {
+          const result = await (supabase
+            .from("user_settings") as any)
+            .select("active_theme_id")
+            .eq("user_id", user.id)
+            .maybeSingle();
+          settings = result.data;
+        } catch (error) {
+          // If query fails, continue without settings
+          settings = null;
+        }
 
         if (settings?.active_theme_id) {
-          // Get theme with primary color and fonts
-          const { data: theme } = await (supabase
-            .from("user_themes") as any)
-            .select("primary_color_id, font_family")
-            .eq("id", settings.active_theme_id)
-            .single();
+          // Get theme with primary color and fonts - with error handling
+          let theme = null;
+          try {
+            const result = await (supabase
+              .from("user_themes") as any)
+              .select("primary_color_id, font_family")
+              .eq("id", settings.active_theme_id)
+              .single();
+            theme = result.data;
+          } catch (error) {
+            // If query fails, continue without theme
+            theme = null;
+          }
 
           let colorInjection = "";
           let fontInjection = "";
 
           // Handle color
           if (theme?.primary_color_id) {
-            // Get color details
-            const { data: color } = await (supabase
-              .from("user_colors") as any)
-              .select("hsl_h, hsl_s, hsl_l, hex")
-              .eq("id", theme.primary_color_id)
-              .single();
+            // Get color details - with error handling
+            let color = null;
+            try {
+              const result = await (supabase
+                .from("user_colors") as any)
+                .select("hsl_h, hsl_s, hsl_l, hex")
+                .eq("id", theme.primary_color_id)
+                .single();
+              color = result.data;
+            } catch (error) {
+              // If query fails, continue without color
+              color = null;
+            }
 
             if (color) {
               const primaryValue = `${color.hsl_h} ${color.hsl_s}% ${color.hsl_l}%`;
@@ -215,23 +281,35 @@ export async function middleware(request: NextRequest) {
               });
           }
         }
-      } catch {
-        // Silently ignore middleware injection errors
+      } catch (error) {
+        // Silently ignore middleware injection errors - don't block the page
+        // Log in development for debugging
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Middleware injection error (non-blocking):', error);
+        }
       }
     }
   }
 
-  // Redirect authenticated users away from login page
-  if (pathname === "/login") {
-    if (user) {
-      // Redirect to admin dashboard if already authenticated
-      const url = request.nextUrl.clone();
-      url.pathname = "/admin";
-      return NextResponse.redirect(url);
+    // Redirect authenticated users away from login page
+    if (isLoginRoute) {
+      if (user) {
+        // Redirect to admin dashboard if already authenticated
+        const url = request.nextUrl.clone();
+        url.pathname = "/admin";
+        return NextResponse.redirect(url);
+      }
     }
-  }
 
-  return supabaseResponse;
+    return supabaseResponse;
+  } catch (error) {
+    // If anything fails in middleware, return a basic response to prevent blocking
+    // This ensures the site remains accessible even if middleware crashes
+    console.error('Middleware error:', error);
+    return NextResponse.next({
+      request,
+    });
+  }
 }
 
 export const config = {

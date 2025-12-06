@@ -7,6 +7,11 @@ export function StylePresetProvider() {
   const pathname = usePathname();
 
   useEffect(() => {
+    // Safety check for client-side only
+    if (typeof window === "undefined" || typeof document === "undefined") {
+      return;
+    }
+
     const htmlElement = document.documentElement;
     
     // Remove all preset classes

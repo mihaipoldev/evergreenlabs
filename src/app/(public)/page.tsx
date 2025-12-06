@@ -9,22 +9,30 @@ import { FAQ } from '@/components/landing/FAQ';
 import { CTA } from '@/components/landing/CTA';
 import { Footer } from '@/components/landing/Footer';
 import { AnalyticsTracker } from '@/components/landing/AnalyticsTracker';
-import { MobileScrollLock } from '@/components/landing/MobileScrollLock';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { getPageBySlug, getVisibleSectionsByPageId, getAllFAQItems, getApprovedTestimonials } from '@/lib/supabase/queries';
 import { getAllOfferFeatures } from '@/features/features/data';
 import type { Database } from '@/lib/supabase/types';
-import type { Section } from '@/features/sections/types';
+import type { CTAButtonWithSection } from '@/features/cta/types';
 
-// Extended section type with page_section metadata
-type SectionWithPageMetadata = Section & {
+// Section type definition
+type Section = {
+  id: string;
+  type: string;
+  title: string | null;
+  admin_title: string | null;
+  subtitle: string | null;
+  content: any | null;
+  media_url: string | null;
   page_section_id: string;
   position: number;
   visible: boolean;
+  ctaButtons?: CTAButtonWithSection[];
 };
 
 export default async function LandingPage() {
   // Fetch the home page (/ corresponds to "home" slug)
-  let sections: SectionWithPageMetadata[] = [];
+  let sections: Section[] = [];
   let homePage: Database["public"]["Tables"]["pages"]["Row"] | null = null;
   
   try {
@@ -60,7 +68,7 @@ export default async function LandingPage() {
   }
 
   // Component mapping based on section type
-  const renderSection = (section: SectionWithPageMetadata) => {
+  const renderSection = (section: Section) => {
     switch (section.type) {
       case 'hero':
         return <Hero key={section.id} section={section} ctaButtons={section.ctaButtons} />;
@@ -104,22 +112,38 @@ export default async function LandingPage() {
   };
 
   return (
-    <>
-      <MobileScrollLock />
-      <div className="bg-background text-foreground w-full">
-        {homePage && (
+    <div className="min-h-screen bg-background text-foreground overflow-x-hidden w-full">
+      {homePage && (
+        <ErrorBoundary>
           <AnalyticsTracker 
             pageId={homePage.id} 
             pageSlug={homePage.slug} 
           />
-        )}
+        </ErrorBoundary>
+      )}
+      <ErrorBoundary>
         <Navbar sections={sections} />
-        <main className="w-full">
-          {/* Render sections dynamically in order from database */}
-          {sections.map((section) => renderSection(section))}
-        </main>
+      </ErrorBoundary>
+      <main className="w-full">
+        {/* Render sections dynamically in order from database */}
+        {sections.length > 0 ? (
+          sections.map((section) => (
+            <ErrorBoundary key={section.id}>
+              {renderSection(section)}
+            </ErrorBoundary>
+          ))
+        ) : (
+          <div className="min-h-screen flex items-center justify-center p-4">
+            <div className="text-center">
+              <h1 className="text-2xl font-bold mb-2">Loading...</h1>
+              <p className="text-muted-foreground">Please wait while we load the page content.</p>
+            </div>
+          </div>
+        )}
+      </main>
+      <ErrorBoundary>
         <Footer />
-      </div>
-    </>
+      </ErrorBoundary>
+    </div>
   );
 }

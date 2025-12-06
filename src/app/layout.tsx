@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import "./globals.css";
 import { StylePresetProvider } from "@/providers/StylePresetProvider";
@@ -14,14 +14,31 @@ export const metadata: Metadata = {
   description: "Evergreen Labs - Building the future, one project at a time.",
 };
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+};
+
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const headersList = await headers();
-  const pathname = headersList.get("x-pathname") || headersList.get("referer") || "";
-  const isAdminPage = pathname.includes("/admin") && !pathname.includes("/admin/login");
+  // Safely get headers with fallback
+  let pathname = "";
+  let isAdminPage = false;
+  
+  try {
+    const headersList = await headers();
+    pathname = headersList.get("x-pathname") || headersList.get("referer") || "";
+    isAdminPage = pathname.includes("/admin") && !pathname.includes("/admin/login");
+  } catch (error) {
+    // If headers() fails, continue without admin features
+    // This prevents the entire site from breaking
+    console.warn('Failed to get headers in layout:', error);
+  }
 
   return (
     <html lang="en" suppressHydrationWarning className={getAllFontVariables()}>

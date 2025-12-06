@@ -36,8 +36,23 @@ export function getOrCreateSessionId(): string {
     }
   }
 
-  // Generate new session ID
-  const sessionId = crypto.randomUUID();
+  // Generate new session ID with fallback for older browsers
+  let sessionId: string;
+  try {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+      sessionId = crypto.randomUUID();
+    } else {
+      // Fallback for older browsers (iOS < 15.4)
+      sessionId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
+    }
+  } catch (e) {
+    // Ultimate fallback if crypto fails
+    sessionId = Date.now().toString(36) + Math.random().toString(36).substring(2);
+  }
 
   // Store in cookie with 30-minute expiration
   const expires = new Date();
@@ -50,6 +65,7 @@ export function getOrCreateSessionId(): string {
 /**
  * Track an analytics event
  * Automatically includes session_id, user_agent, and referrer
+ * Includes timeout to prevent hanging on mobile Safari
  */
 export async function trackEvent(params: TrackEventParams): Promise<void> {
   if (typeof window === "undefined") {
@@ -63,6 +79,10 @@ export async function trackEvent(params: TrackEventParams): Promise<void> {
   const referrer = document.referrer || null;
 
   try {
+    // Add timeout using AbortController to prevent hanging on mobile
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
     const response = await fetch("/api/admin/analytics", {
       method: "POST",
       headers: {
@@ -77,14 +97,20 @@ export async function trackEvent(params: TrackEventParams): Promise<void> {
         referrer: referrer,
         metadata: params.metadata || null,
       }),
+      signal: controller.signal, // Add abort signal
     });
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       console.error("Failed to track event:", await response.text());
     }
   } catch (error) {
     // Silently fail - don't interrupt user experience
-    console.error("Error tracking event:", error);
+    // Ignore AbortError from timeout
+    if (error instanceof Error && error.name !== 'AbortError') {
+      console.error("Error tracking event:", error);
+    }
   }
 }
 
@@ -97,7 +123,14 @@ export function trackSessionStart(): void {
   
   // Check if we've already tracked session start for this session
   const sessionStartKey = `session_start_${sessionId}`;
-  const hasTrackedSession = sessionStorage.getItem(sessionStartKey);
+  let hasTrackedSession = false;
+  
+  try {
+    hasTrackedSession = !!sessionStorage.getItem(sessionStartKey);
+  } catch (e) {
+    // sessionStorage might not be available (private browsing, etc.)
+    // Continue without checking - we'll still track the event
+  }
   
   if (!hasTrackedSession) {
     trackEvent({
@@ -114,7 +147,7 @@ export function trackSessionStart(): void {
     try {
       sessionStorage.setItem(sessionStartKey, "true");
     } catch (e) {
-      // sessionStorage might not be available
+      // sessionStorage might not be available - that's ok
     }
   }
 }

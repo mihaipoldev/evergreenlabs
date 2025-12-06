@@ -61,11 +61,19 @@ export const Navbar = ({ sections = [] }: NavbarProps) => {
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState<string>('');
 
+  // Safe theme value - default to 'light' if not ready
+  const currentTheme = theme || 'light';
+
   useEffect(() => {
     setMounted(true);
   }, []);
 
   useEffect(() => {
+    // Safety check for client-side only
+    if (typeof window === "undefined") {
+      return;
+    }
+
     const handleScroll = () => {
       const isScrolled = window.scrollY > 10;
       setScrolled(isScrolled);
@@ -78,6 +86,12 @@ export const Navbar = ({ sections = [] }: NavbarProps) => {
   // Smooth scroll handler for navigation links
   const handleSmoothScroll = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     e.preventDefault();
+    
+    // Safety check for client-side only
+    if (typeof window === "undefined" || typeof document === "undefined") {
+      return;
+    }
+
     const targetId = href.replace('#', '');
     const targetElement = document.getElementById(targetId);
     
@@ -107,6 +121,11 @@ export const Navbar = ({ sections = [] }: NavbarProps) => {
 
   // Scroll detection to highlight active section
   useEffect(() => {
+    // Safety check for client-side only
+    if (typeof window === "undefined" || typeof document === "undefined") {
+      return;
+    }
+
     // Get the first section element to check if we're above it
     const firstSection = navLinks[0];
     const firstElement = firstSection ? document.getElementById(firstSection.sectionId) : null;
@@ -114,6 +133,11 @@ export const Navbar = ({ sections = [] }: NavbarProps) => {
 
     // Handle scroll to update active section
     const handleScroll = () => {
+      // Double-check window is available
+      if (typeof window === "undefined") {
+        return;
+      }
+
       const scrollY = window.scrollY;
       
       // Check if CTA section is in view
@@ -181,31 +205,33 @@ export const Navbar = ({ sections = [] }: NavbarProps) => {
 
     return () => {
       clearTimeout(timeoutId);
+      if (typeof window !== "undefined") {
       window.removeEventListener('scroll', throttledHandleScroll);
+      }
     };
   }, [navLinks]);
 
+  const navClassName = `fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+    scrolled
+      ? 'bg-[#fefefecc] backdrop-blur-[5px] dark:bg-[#0a0a0acc] dark:backdrop-blur-[5px]'
+      : 'bg-transparent backdrop-blur-0 dark:bg-transparent dark:backdrop-blur-0'
+  }`;
+
   return (
     <motion.nav
-      initial={{ y: -20, opacity: 0 }}
+      initial={false}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.5 }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? 'bg-[#fefefecc] backdrop-blur-[5px] dark:bg-[#0a0a0acc] dark:backdrop-blur-[5px]'
-          : 'bg-transparent backdrop-blur-0 dark:bg-transparent dark:backdrop-blur-0'
-      }`}
+      className={navClassName}
     >
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
-          <motion.a
+          <a
             href="#"
             className="flex items-center gap-2"
-            whileHover={{ scale: 1.02 }}
           >
             <span className="text-foreground font-semibold text-lg" style={{ fontFamily: 'var(--font-gotham)' }}>Evergreen Systems</span>
-          </motion.a>
+          </a>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
@@ -261,11 +287,11 @@ export const Navbar = ({ sections = [] }: NavbarProps) => {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                onClick={() => setTheme && setTheme(currentTheme === "dark" ? "light" : "dark")}
                 className="w-10 h-10 rounded-lg flex items-center justify-center text-foreground hover:text-primary transition-colors duration-[1ms]"
                 aria-label="Toggle theme"
               >
-                {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
+                {currentTheme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
               </motion.button>
             )}
             <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }}>
@@ -300,11 +326,11 @@ export const Navbar = ({ sections = [] }: NavbarProps) => {
             {/* Theme Toggle Mobile */}
             {mounted && (
               <button
-                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                onClick={() => setTheme && setTheme(currentTheme === "dark" ? "light" : "dark")}
                 className="w-10 h-10 rounded-lg flex items-center justify-center text-foreground hover:bg-secondary transition-colors"
                 aria-label="Toggle theme"
               >
-                {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
+                {currentTheme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
               </button>
             )}
             <button

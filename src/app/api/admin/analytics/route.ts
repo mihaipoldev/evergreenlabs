@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import type { Database } from "@/lib/supabase/types";
 import { headers } from "next/headers";
@@ -68,7 +68,8 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     // Public endpoint - no authentication required for tracking
-    const supabase = await createClient();
+    // Use service role client to bypass RLS for public analytics tracking
+    const supabase = createServiceRoleClient();
     const headersList = await headers();
     const body = await request.json();
     
@@ -121,7 +122,7 @@ export async function POST(request: Request) {
       city,
       user_agent: finalUserAgent,
       referrer: finalReferrer,
-        metadata: metadata || null,
+      metadata: metadata || null,
     };
 
     const { data, error } = await (supabase

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { AdminPageTitle } from "@/components/admin/AdminPageTitle";
 import { AnalyticsDashboard } from "@/components/admin/AnalyticsDashboard";
@@ -67,7 +67,7 @@ const defaultData: AnalyticsData = {
   topCountriesByVideoClick: [],
 };
 
-export default function AnalyticsPage() {
+function AnalyticsContent() {
   const searchParams = useSearchParams();
   const [data, setData] = useState<AnalyticsData>(defaultData);
   const [loading, setLoading] = useState(true);
@@ -116,5 +116,25 @@ export default function AnalyticsPage() {
       />
       <AnalyticsDashboard data={data} />
     </>
+  );
+}
+
+export default function AnalyticsPage() {
+  return (
+    <Suspense
+      fallback={
+        <>
+          <AdminPageTitle
+            title="Analytics"
+            description="View your site analytics and performance metrics."
+          />
+          <div className="flex items-center justify-center min-h-[400px]">
+            <p className="text-muted-foreground">Loading analytics...</p>
+          </div>
+        </>
+      }
+    >
+      <AnalyticsContent />
+    </Suspense>
   );
 }

@@ -136,7 +136,11 @@ export const Hero = ({ section, ctaButtons }: HeroProps) => {
   useEffect(() => {
     // Get primary color from CSS variable and convert to hex
     const getPrimaryColor = () => {
-      if (typeof window !== 'undefined') {
+      if (typeof window === 'undefined') {
+        return '#0a7afa';
+      }
+      
+      try {
         const root = document.documentElement;
         const computedStyle = getComputedStyle(root);
         
@@ -167,11 +171,13 @@ export const Hero = ({ section, ctaButtons }: HeroProps) => {
         
         // Use the utility function for accurate conversion
         return hslToHex(h, s, l);
+      } catch (e) {
+        // Fallback if any error occurs
+        return '#0a7afa';
       }
-      return '#0a7afa'; // Fallback to primary blue (HSL 212, 96%, 51%)
     };
 
-    // Initialize Wistia Queue - MUST be set up BEFORE scripts load
+    // Initialize Wistia Queue - simplified for mobile performance
     if (typeof window !== 'undefined' && videoId) {
       const primaryColor = getPrimaryColor();
       const hexWithoutHash = primaryColor.replace('#', '');
@@ -182,283 +188,39 @@ export const Hero = ({ section, ctaButtons }: HeroProps) => {
       // Remove any existing queue item for this video
       (window as any)._wq = (window as any)._wq.filter((item: any) => item.id !== videoId);
       
-      // Push player options to queue BEFORE embed
+      // Push player options to queue BEFORE embed - simplified
       (window as any)._wq.push({
         id: videoId,
         options: {
           playerColor: hexWithoutHash,
-          // Additional options to ensure color is applied
           playerColorFade: false,
         },
         onReady: function(video: any) {
-          // Backup: Also set it once video is ready
-          console.log('Wistia video ready, setting color:', hexWithoutHash);
+          // Set color once when ready - no excessive retries
+          try {
+            if (typeof video.playerColor === 'function') {
+              video.playerColor(hexWithoutHash);
+            }
+          } catch (e) {
+            // Silently fail - don't crash the page
+            console.warn('Could not set Wistia color:', e);
+          }
           
           // Track video play event
-          video.bind('play', function() {
-            const mediaId = mainMedia?.id || videoId || 'unknown';
-            handleVideoPlay(mediaId);
-          });
-          
-          // Remove border-radius from progress bar element
-              const removeBorderRadius = () => {
-            try {
-              // Find the iframe containing the Wistia player
-              const iframe = document.querySelector('iframe[src*="' + videoId + '"]') as HTMLIFrameElement;
-              if (iframe && iframe.contentDocument && iframe.contentDocument.body) {
-                // Find all divs - check every div for the progress bar pattern
-                const allDivs = iframe.contentDocument.body.querySelectorAll('div');
-                allDivs.forEach((div: Element) => {
-                  const htmlDiv = div as HTMLElement;
-                  const style = htmlDiv.getAttribute('style') || '';
-                  
-                  // EXCLUDE: play button and w-vulcan elements
-                  if (htmlDiv.closest('.w-big-play-button') || 
-                      htmlDiv.closest('[class*="w-vulcan"]') ||
-                      htmlDiv.classList.contains('w-big-play-button')) {
-                    return; // Skip play button and w-vulcan elements
-                  }
-                  
-                  // Match the EXACT element pattern from user:
-                  // <div style="background: rgba(134, 228, 27, 0.85); border-radius: 4.5px; height: 100%; position: absolute;...">
-                  const hasAllProperties = style.includes('rgba(') && 
-                                          style.includes('border-radius: 4.5px') && 
-                                          style.includes('height: 100%') && 
-                                          style.includes('position: absolute');
-                  
-                  if (hasAllProperties) {
-                    // Remove border-radius by modifying the style attribute directly
-                    let currentStyle = htmlDiv.getAttribute('style') || htmlDiv.style.cssText || '';
-                    
-                    // Multiple replacement patterns to catch all variations
-                    currentStyle = currentStyle.replace(/border-radius:\s*4\.5px/gi, 'border-radius: 0');
-                    currentStyle = currentStyle.replace(/border-radius:4\.5px/gi, 'border-radius: 0');
-                    currentStyle = currentStyle.replace(/border-radius:\s*4\.\s*5px/gi, 'border-radius: 0');
-                    
-                    // Update the style attribute
-                    htmlDiv.setAttribute('style', currentStyle);
-                    
-                    // Also set it directly on the style object (multiple methods for maximum compatibility)
-                    htmlDiv.style.borderRadius = '0';
-                    htmlDiv.style.setProperty('border-radius', '0', 'important');
-                    
-                    // Double-check and force if needed
-                    if (htmlDiv.style.borderRadius !== '0px' && htmlDiv.style.borderRadius !== '0') {
-                      htmlDiv.style.removeProperty('border-radius');
-                      htmlDiv.style.setProperty('border-radius', '0', 'important');
-                    }
-                    
-                    console.log('✓ Removed border-radius from progress bar element');
-                  }
-                });
-                
-                // Also try injecting CSS directly into iframe head as a backup
-                try {
-                  const iframeDoc = iframe.contentDocument;
-                  if (iframeDoc && iframeDoc.head) {
-                    // Check if style already exists
-                    let styleElement = iframeDoc.getElementById('progress-bar-no-radius');
-                    if (!styleElement) {
-                      styleElement = iframeDoc.createElement('style');
-                      styleElement.id = 'progress-bar-no-radius';
-                      styleElement.textContent = `
-                        div[style*="border-radius: 4.5px"][style*="rgba("][style*="height: 100%"][style*="position: absolute"] {
-                          border-radius: 0 !important;
-                        }
-                        .w-progress-bar div[style*="border-radius: 4.5px"],
-                        .w-progress-inner div[style*="border-radius: 4.5px"] {
-                          border-radius: 0 !important;
-                        }
-                      `;
-                      iframeDoc.head.appendChild(styleElement);
-                      console.log('✓ Injected CSS into iframe to remove border-radius');
-                    }
-                  }
-                } catch (cssError) {
-                  // CSS injection failed, that's ok - JavaScript method should work
-                }
-              }
-            } catch (e) {
-              // Cross-origin iframe access is restricted, this is expected for Wistia
-              // In that case, we rely on CSS from the parent page (which may not work)
-              console.warn('Could not access Wistia iframe to remove border-radius:', e);
-            }
-          };
-
-          // Try multiple times with different methods
-          // This ensures BOTH play button AND progress bar get the color
-          const setColor = () => {
-            try {
-              // Method 1: Use playerColor method (most common) - affects both play button and progress bar
-              if (typeof video.playerColor === 'function') {
-                video.playerColor(hexWithoutHash);
-                console.log('Set color via playerColor() method - affects play button AND progress bar');
-              }
-              
-              // Method 2: Use setOption if available
-              if (typeof video.setOption === 'function') {
-                video.setOption('playerColor', hexWithoutHash);
-                console.log('Set color via setOption() method');
-              }
-              
-              // Method 3: Update options
-              if (typeof video.updateOptions === 'function') {
-                video.updateOptions({ playerColor: hexWithoutHash });
-                console.log('Set color via updateOptions() method');
-              }
-              
-              // Method 4: Direct options
-              if (video.options && typeof video.options === 'function') {
-                video.options({ playerColor: hexWithoutHash });
-                console.log('Set color via options() method');
-              }
-              
-              // Method 5: Access the underlying player
-              if (video._player && video._player.playerColor) {
-                video._player.playerColor(hexWithoutHash);
-                console.log('Set color via _player.playerColor()');
-              }
-              
-              // Method 6: Force update the player to ensure progress bar updates
-              if (typeof video.update === 'function') {
-                video.update();
-              }
-              
-              // Also remove border-radius whenever we set color
-              removeBorderRadius();
-              
-            } catch (e) {
-              console.error('Error setting color:', e);
-            }
-          };
-          
-          // Set immediately
-          setColor();
-          
-          // Set after short delays (Wistia might need time to fully initialize)
-          // Progress bar may render later, so we need multiple attempts
-          setTimeout(setColor, 100);
-          setTimeout(setColor, 300);
-          setTimeout(setColor, 500);
-          setTimeout(setColor, 1000);
-          setTimeout(setColor, 2000);
-          setTimeout(setColor, 3000);
-          setTimeout(setColor, 4000);
-          
-          // Also try on various events to ensure progress bar gets updated
-          video.bind('play', function() {
-            setTimeout(setColor, 100);
-          });
-          
-          video.bind('hasplayed', function() {
-            setTimeout(setColor, 100);
-          });
-          
-          // Watch for when controls are ready (progress bar is rendered)
-          video.bind('timechange', function() {
-            // Progress bar should be visible now, set color again
-            setTimeout(setColor, 50);
-          });
-          
-          // Also set color on any state change - progress bar might render here
-          video.bind('statechange', function() {
-            setTimeout(setColor, 50);
-          });
-          
-          // Watch for when video is fully loaded and controls are ready
-          video.bind('loadeddata', function() {
-            setTimeout(setColor, 200);
-          });
-          
-          // Continuous check every 500ms for the first 10 seconds to catch progress bar rendering
-          var checkCount = 0;
-          var maxChecks = 20;
-          var colorInterval = setInterval(function() {
-            checkCount++;
-            setColor();
-            removeBorderRadius(); // Also remove border-radius independently
-            if (checkCount >= maxChecks) {
-              clearInterval(colorInterval);
-            }
-          }, 500);
-          
-          // Additional aggressive check every 100ms for first 5 seconds
-          var quickCheckCount = 0;
-          var quickCheckInterval = setInterval(function() {
-            quickCheckCount++;
-            removeBorderRadius();
-            if (quickCheckCount >= 50) { // 5 seconds
-              clearInterval(quickCheckInterval);
-            }
-          }, 100);
-          
-          // Also call removeBorderRadius at various intervals
-          setTimeout(removeBorderRadius, 1000);
-          setTimeout(removeBorderRadius, 2000);
-          setTimeout(removeBorderRadius, 3000);
-          setTimeout(removeBorderRadius, 5000);
-          
-          // Try on video events as well
-          video.bind('timechange', function() {
-            setTimeout(removeBorderRadius, 50);
-          });
-          
-          video.bind('statechange', function() {
-            setTimeout(removeBorderRadius, 50);
-          });
-          
-          // Use MutationObserver to watch for progress bar element creation
-          setTimeout(function() {
-            try {
-              var iframe = document.querySelector('iframe[src*="' + videoId + '"]') as HTMLIFrameElement;
-              if (iframe && iframe.contentDocument) {
-                var observer = new MutationObserver(function(mutations) {
-                  setColor();
-                  // Check each mutation for progress bar elements
-                  mutations.forEach(function(mutation) {
-                    if (mutation.type === 'childList') {
-                      mutation.addedNodes.forEach(function(node: Node) {
-                        if (node.nodeType === 1) {
-                          const element = node as HTMLElement;
-                          const style = element.getAttribute('style');
-                          if (style && style.includes('border-radius: 4.5px') && style.includes('rgba(')) {
-                            setTimeout(removeBorderRadius, 10);
-                          }
-                          // Check children too
-                          const progressDivs = element.querySelectorAll('div[style*="border-radius: 4.5px"]');
-                          if (progressDivs.length > 0) {
-                            setTimeout(removeBorderRadius, 10);
-                          }
-                        }
-                      });
-                    }
-                    if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
-                      const target = mutation.target as HTMLElement;
-                      const style = target.getAttribute('style');
-                      if (style && style.includes('border-radius: 4.5px') && style.includes('rgba(')) {
-                        setTimeout(removeBorderRadius, 10);
-                      }
-                    }
-                  });
-                  removeBorderRadius(); // Also check all existing elements
-                });
-                observer.observe(iframe.contentDocument.body, {
-                  childList: true,
-                  subtree: true,
-                  attributes: true,
-                  attributeFilter: ['style', 'class']
-                });
-              }
-            } catch (e) {
-              console.warn('Could not set up MutationObserver for Wistia iframe:', e);
-            }
-          }, 1000); // Start observing earlier
+          try {
+            video.bind('play', function() {
+              const mediaId = mainMedia?.id || videoId || 'unknown';
+              handleVideoPlay(mediaId);
+            });
+          } catch (e) {
+            console.warn('Could not bind Wistia play event:', e);
+          }
         }
       });
-      
-      console.log('Wistia queue initialized with color:', hexWithoutHash, 'for video:', videoId);
     }
-  }, [videoId]);
+    
+    // No cleanup needed - Wistia queue persists
+  }, [videoId, mainMedia?.id]);
 
   return (
     <section className="relative flex items-center justify-center pt-32 overflow-hidden">
@@ -629,16 +391,24 @@ export const Hero = ({ section, ctaButtons }: HeroProps) => {
               }}
             />
             
-            {/* Wistia Scripts - Load after queue is initialized */}
+            {/* Wistia Scripts - Load lazily to avoid blocking mobile */}
             <Script
               key={`wistia-media-${videoId}`}
               src={`https://fast.wistia.com/embed/medias/${videoId}.jsonp`}
-              strategy="afterInteractive"
+              strategy="lazyOnload"
+              onError={(e) => {
+                console.error('Wistia media script failed to load:', e);
+                // Don't crash the page if Wistia fails
+              }}
             />
             <Script
               key="wistia-external"
               src="https://fast.wistia.com/assets/external/E-v1.js"
-              strategy="afterInteractive"
+              strategy="lazyOnload"
+              onError={(e) => {
+                console.error('Wistia external script failed to load:', e);
+                // Don't crash the page if Wistia fails
+              }}
             />
           </>
         )}

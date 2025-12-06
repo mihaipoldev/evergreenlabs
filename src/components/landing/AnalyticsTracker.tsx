@@ -10,6 +10,11 @@ interface AnalyticsTrackerProps {
 
 export function AnalyticsTracker({ pageId, pageSlug }: AnalyticsTrackerProps) {
   useEffect(() => {
+    // Safety check for client-side only
+    if (typeof window === "undefined") {
+      return;
+    }
+
     // Track session start (only once per session)
     trackSessionStart();
 
